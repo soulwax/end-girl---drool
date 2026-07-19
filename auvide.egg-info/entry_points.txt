@@ -1,0 +1,3 @@
+[console_scripts]
+auvide = upscale_hdr:main
+auvide-gui = gui:main

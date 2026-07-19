@@ -1,0 +1,72 @@
+
+================================================================================
+2026-07-05 09:07:33
+C:\Users\soulwax\scoop\shims\ffmpeg.EXE -hide_banner -nostdin -y -i "C:\Users\soulwax\OneDrive - Biz\Videos\Music Videos\end girl - drool\end_girl-drool.mp4" -map 0:v:0 -vsync 0 -frames:v 1 -q:v 2 "C:\Users\soulwax\OneDrive - Biz\Videos\Music Videos\end girl - drool\out\_smoke_work\frames\frame_%08d.jpg"
+
+-vsync is deprecated. Use -fps_mode
+Passing a number to -vsync is deprecated, use a string argument as described in the manual.
+Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'C:\Users\soulwax\OneDrive - Biz\Videos\Music Videos\end girl - drool\end_girl-drool.mp4':
+  Metadata:
+    major_brand     : isom
+    minor_version   : 512
+    compatible_brands: isomiso2avc1mp41
+    encoder         : Lavf58.3.100
+  Duration: 00:03:41.39, start: 0.000000, bitrate: 1253 kb/s
+  Stream #0:0[0x1](und): Video: h264 (Main) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 1280x674 [SAR 1:1 DAR 640:337], 1121 kb/s, 23.98 fps, 23.98 tbr, 90k tbn (default)
+    Metadata:
+      handler_name    : VideoHandler
+  Stream #0:1[0x2](eng): Audio: aac (LC) (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 125 kb/s (default)
+    Metadata:
+      handler_name    : SoundHandler
+Stream mapping:
+  Stream #0:0 -> #0:0 (h264 (native) -> mjpeg (native))
+Output #0, image2, to 'C:\Users\soulwax\OneDrive - Biz\Videos\Music Videos\end girl - drool\out\_smoke_work\frames\frame_%08d.jpg':
+  Metadata:
+    major_brand     : isom
+    minor_version   : 512
+    compatible_brands: isomiso2avc1mp41
+    encoder         : Lavf62.12.102
+  Stream #0:0(und): Video: mjpeg, yuv420p(pc, bt709, progressive), 1280x674 [SAR 1:1 DAR 640:337], q=2-31, 200 kb/s, 23.98 fps, 23.98 tbn (default)
+    Metadata:
+      encoder         : Lavc62.28.102 mjpeg
+      handler_name    : VideoHandler
+    Side data:
+      CPB properties: bitrate max/min/avg: 0/0/200000 buffer size: 0 vbv_delay: N/A
+[out#0/image2 @ 000002a17c2f1bc0] video:118KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: unknown
+frame=    1 fps=0.0 q=2.0 Lsize=N/A time=00:00:00.04 bitrate=N/A speed=1.03x elapsed=0:00:00.04    
+
+================================================================================
+2026-07-05 09:13:51
+C:\Users\soulwax\scoop\shims\ffmpeg.EXE -hide_banner -nostdin -y -i "C:\Users\soulwax\OneDrive - Biz\Videos\Music Videos\end girl - drool\end_girl-drool.mp4" -map 0:v:0 -vsync 0 -frames:v 1 -q:v 2 "C:\Users\soulwax\OneDrive - Biz\Videos\Music Videos\end girl - drool\out\_smoke_work\frames\frame_%08d.jpg"
+
+-vsync is deprecated. Use -fps_mode
+Passing a number to -vsync is deprecated, use a string argument as described in the manual.
+Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'C:\Users\soulwax\OneDrive - Biz\Videos\Music Videos\end girl - drool\end_girl-drool.mp4':
+  Metadata:
+    major_brand     : isom
+    minor_version   : 512
+    compatible_brands: isomiso2avc1mp41
+    encoder         : Lavf58.3.100
+  Duration: 00:03:41.39, start: 0.000000, bitrate: 1253 kb/s
+  Stream #0:0[0x1](und): Video: h264 (Main) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 1280x674 [SAR 1:1 DAR 640:337], 1121 kb/s, 23.98 fps, 23.98 tbr, 90k tbn (default)
+    Metadata:
+      handler_name    : VideoHandler
+  Stream #0:1[0x2](eng): Audio: aac (LC) (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 125 kb/s (default)
+    Metadata:
+      handler_name    : SoundHandler
+Stream mapping:
+  Stream #0:0 -> #0:0 (h264 (native) -> mjpeg (native))
+Output #0, image2, to 'C:\Users\soulwax\OneDrive - Biz\Videos\Music Videos\end girl - drool\out\_smoke_work\frames\frame_%08d.jpg':
+  Metadata:
+    major_brand     : isom
+    minor_version   : 512
+    compatible_brands: isomiso2avc1mp41
+    encoder         : Lavf62.12.102
+  Stream #0:0(und): Video: mjpeg, yuv420p(pc, bt709, progressive), 1280x674 [SAR 1:1 DAR 640:337], q=2-31, 200 kb/s, 23.98 fps, 23.98 tbn (default)
+    Metadata:
+      encoder         : Lavc62.28.102 mjpeg
+      handler_name    : VideoHandler
+    Side data:
+      CPB properties: bitrate max/min/avg: 0/0/200000 buffer size: 0 vbv_delay: N/A
+[out#0/image2 @ 0000025f057214c0] video:118KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: unknown
+frame=    1 fps=0.0 q=2.0 Lsize=N/A time=00:00:00.04 bitrate=N/A speed=0.607x elapsed=0:00:00.06    

@@ -1,0 +1,4 @@
+pillow>=10.0
+
+[dnd]
+tkinterdnd2>=0.4

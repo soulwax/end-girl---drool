@@ -1,0 +1,148 @@
+
+================================================================================
+2026-07-05 09:13:04
+C:\Users\soulwax\scoop\shims\ffmpeg.EXE -hide_banner -nostdin -y -framerate 24000/1001 -start_number 1 -i "C:\Users\soulwax\OneDrive - Biz\Videos\Music Videos\end girl - drool\out\_smoke_work\upscaled\frame_%08d.jpg" -i "C:\Users\soulwax\OneDrive - Biz\Videos\Music Videos\end girl - drool\end_girl-drool.mp4" -map 0:v:0 -map 1:a? -map_metadata 1 -vf eq=saturation=1.72:contrast=1.2:brightness=0.012:gamma=0.94,unsharp=5:5:0.65:3:3:0.16,format=yuv420p10le -c:v libx265 -preset medium -crf 17 -pix_fmt yuv420p10le -color_primaries bt709 -color_trc bt709 -colorspace bt709 -tag:v hvc1 -c:a copy -shortest -movflags +faststart "C:\Users\soulwax\OneDrive - Biz\Videos\Music Videos\end girl - drool\out\_smoke\end_girl-drool_up2x_vibe3_hypercolor.mp4"
+
+Input #0, image2, from 'C:\Users\soulwax\OneDrive - Biz\Videos\Music Videos\end girl - drool\out\_smoke_work\upscaled\frame_%08d.jpg':
+  Duration: 00:00:00.04, start: 0.000000, bitrate: N/A
+  Stream #0:0: Video: mjpeg (Baseline), yuvj420p(pc, bt470bg/unknown/unknown), 2560x1348, 23.98 fps, 23.98 tbr, 23.98 tbn
+Input #1, mov,mp4,m4a,3gp,3g2,mj2, from 'C:\Users\soulwax\OneDrive - Biz\Videos\Music Videos\end girl - drool\end_girl-drool.mp4':
+  Metadata:
+    major_brand     : isom
+    minor_version   : 512
+    compatible_brands: isomiso2avc1mp41
+    encoder         : Lavf58.3.100
+  Duration: 00:03:41.39, start: 0.000000, bitrate: 1253 kb/s
+  Stream #1:0[0x1](und): Video: h264 (Main) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 1280x674 [SAR 1:1 DAR 640:337], 1121 kb/s, 23.98 fps, 23.98 tbr, 90k tbn (default)
+    Metadata:
+      handler_name    : VideoHandler
+  Stream #1:1[0x2](eng): Audio: aac (LC) (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 125 kb/s (default)
+    Metadata:
+      handler_name    : SoundHandler
+Stream mapping:
+  Stream #0:0 -> #0:0 (mjpeg (native) -> hevc (libx265))
+  Stream #1:1 -> #0:1 (copy)
+[swscaler @ 000001ecd4357f80] deprecated pixel format used, make sure you did set range correctly
+[swscaler @ 000001ecd46c6fc0] No accelerated colorspace conversion found from yuv420p to bgr48le.
+[swscaler @ 000001ecd46c6fc0] [swscaler @ 000001ecd476ffc0] No accelerated colorspace conversion found from yuv420p to bgr48le.
+[swscaler @ 000001ecd46c6fc0] [swscaler @ 000001ecd5727400] No accelerated colorspace conversion found from yuv420p to bgr48le.
+[swscaler @ 000001ecd46c6fc0] [swscaler @ 000001ecd5736d40] No accelerated colorspace conversion found from yuv420p to bgr48le.
+[swscaler @ 000001ecd46c6fc0] [swscaler @ 000001ecd5746680] No accelerated colorspace conversion found from yuv420p to bgr48le.
+[swscaler @ 000001ecd46c6fc0] [swscaler @ 000001ecd5755fc0] No accelerated colorspace conversion found from yuv420p to bgr48le.
+[swscaler @ 000001ecd46c6fc0] [swscaler @ 000001ecd5763000] No accelerated colorspace conversion found from yuv420p to bgr48le.
+[swscaler @ 000001ecd46c6fc0] [swscaler @ 000001ecd5770040] No accelerated colorspace conversion found from yuv420p to bgr48le.
+[swscaler @ 000001ecd46c6fc0] [swscaler @ 000001ecd578d0c0] No accelerated colorspace conversion found from yuv420p to bgr48le.
+[swscaler @ 000001ecd46c6fc0] [swscaler @ 000001ecd579a100] No accelerated colorspace conversion found from yuv420p to bgr48le.
+x265 [info]: HEVC encoder version 4.2+37-b81f650
+x265 [info]: build info [Windows][GCC 16.1.0][64 bit] 10bit
+x265 [info]: using cpu capabilities: MMX2 SSE2Fast LZCNT SSSE3 SSE4.2 AVX FMA3 BMI2 AVX2
+x265 [info]: Main 10 profile, Level-5 (Main tier)
+x265 [info]: Thread pool created using 8 threads
+x265 [info]: Slices                              : 1
+x265 [info]: frame threads / pool features       : 3 / wpp(22 rows)
+x265 [info]: Coding QT: max CU size, min CU size : 64 / 8
+x265 [info]: Residual QT: max TU size, max depth : 32 / 1 inter / 1 intra
+x265 [info]: ME / range / subpel / merge         : hex / 57 / 2 / 3
+x265 [info]: Keyframe min / max / scenecut / bias  : 23 / 250 / 40 / 5.00 
+x265 [info]: Lookahead / bframes / badapt        : 20 / 4 / 2
+x265 [info]: b-pyramid / weightp / weightb       : 1 / 1 / 0
+x265 [info]: References / ref-limit  cu / depth  : 3 / off / on
+x265 [info]: AQ: mode / str / qg-size / cu-tree  : 2 / 1.0 / 32 / 1
+x265 [info]: Rate Control / qCompress            : CRF-17.0 / 0.60
+x265 [info]: tools: rd=3 psy-rd=2.00 early-skip rskip mode=1 signhide tmvp
+x265 [info]: tools: b-intra strong-intra-smoothing lslices=8 deblock sao
+x265 [info]: tools: dhdr10-info
+Output #0, mp4, to 'C:\Users\soulwax\OneDrive - Biz\Videos\Music Videos\end girl - drool\out\_smoke\end_girl-drool_up2x_vibe3_hypercolor.mp4':
+  Metadata:
+    major_brand     : isom
+    minor_version   : 512
+    compatible_brands: isomiso2avc1mp41
+    encoder         : Lavf62.12.102
+  Stream #0:0: Video: hevc (hvc1 / 0x31637668), yuv420p10le(pc, bt709/unknown/unknown, progressive), 2560x1348, q=2-31, 23.98 fps, 24k tbn
+    Metadata:
+      encoder         : Lavc62.28.102 libx265
+    Side data:
+      CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
+  Stream #0:1(eng): Audio: aac (LC) (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 125 kb/s (default)
+    Metadata:
+      handler_name    : SoundHandler
+frame=    0 fps=0.0 q=0.0 size=       0KiB time=N/A bitrate=N/A speed=N/A elapsed=0:00:00.50    [mp4 @ 000001ecd214b840] Starting second pass: moving the moov atom to the beginning of the file
+[out#0/mp4 @ 000001ecd20c0200] video:259KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:2KiB muxing overhead: 1.429757%
+frame=    1 fps=0.0 q=19.6 Lsize=     263KiB time=00:00:00.04 bitrate=51571.9kbits/s speed=0.0467x elapsed=0:00:00.89    
+x265 [info]: frame I:      1, Avg QP:19.63  kb/s: 50773.93
+
+encoded 1 frames in 0.81s (1.24 fps), 50773.93 kb/s, Avg QP:19.63
+
+================================================================================
+2026-07-05 09:14:40
+C:\Users\soulwax\scoop\shims\ffmpeg.EXE -hide_banner -nostdin -y -framerate 24000/1001 -start_number 1 -i "C:\Users\soulwax\OneDrive - Biz\Videos\Music Videos\end girl - drool\out\_smoke_work\upscaled\frame_%08d.jpg" -i "C:\Users\soulwax\OneDrive - Biz\Videos\Music Videos\end girl - drool\end_girl-drool.mp4" -map 0:v:0 -map 1:a? -map_metadata 1 -vf eq=saturation=1.72:contrast=1.2:brightness=0.012:gamma=0.94,unsharp=5:5:0.65:3:3:0.16,format=yuv420p10le -c:v libx265 -preset medium -crf 17 -pix_fmt yuv420p10le -color_primaries bt709 -color_trc bt709 -colorspace bt709 -tag:v hvc1 -c:a copy -shortest -movflags +faststart "C:\Users\soulwax\OneDrive - Biz\Videos\Music Videos\end girl - drool\out\_smoke\end_girl-drool_up2x_vibe3_hypercolor.mp4"
+
+Input #0, image2, from 'C:\Users\soulwax\OneDrive - Biz\Videos\Music Videos\end girl - drool\out\_smoke_work\upscaled\frame_%08d.jpg':
+  Duration: 00:00:00.04, start: 0.000000, bitrate: N/A
+  Stream #0:0: Video: mjpeg (Baseline), yuvj420p(pc, bt470bg/unknown/unknown), 2560x1348, 23.98 fps, 23.98 tbr, 23.98 tbn
+Input #1, mov,mp4,m4a,3gp,3g2,mj2, from 'C:\Users\soulwax\OneDrive - Biz\Videos\Music Videos\end girl - drool\end_girl-drool.mp4':
+  Metadata:
+    major_brand     : isom
+    minor_version   : 512
+    compatible_brands: isomiso2avc1mp41
+    encoder         : Lavf58.3.100
+  Duration: 00:03:41.39, start: 0.000000, bitrate: 1253 kb/s
+  Stream #1:0[0x1](und): Video: h264 (Main) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 1280x674 [SAR 1:1 DAR 640:337], 1121 kb/s, 23.98 fps, 23.98 tbr, 90k tbn (default)
+    Metadata:
+      handler_name    : VideoHandler
+  Stream #1:1[0x2](eng): Audio: aac (LC) (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 125 kb/s (default)
+    Metadata:
+      handler_name    : SoundHandler
+Stream mapping:
+  Stream #0:0 -> #0:0 (mjpeg (native) -> hevc (libx265))
+  Stream #1:1 -> #0:1 (copy)
+[swscaler @ 0000023f85ddbfc0] deprecated pixel format used, make sure you did set range correctly
+[swscaler @ 0000023f86146f80] No accelerated colorspace conversion found from yuv420p to bgr48le.
+[swscaler @ 0000023f86146f80] [swscaler @ 0000023f87194f80] No accelerated colorspace conversion found from yuv420p to bgr48le.
+[swscaler @ 0000023f86146f80] [swscaler @ 0000023f871a1fc0] No accelerated colorspace conversion found from yuv420p to bgr48le.
+[swscaler @ 0000023f86146f80] [swscaler @ 0000023f871af000] No accelerated colorspace conversion found from yuv420p to bgr48le.
+[swscaler @ 0000023f86146f80] [swscaler @ 0000023f871be940] No accelerated colorspace conversion found from yuv420p to bgr48le.
+[swscaler @ 0000023f86146f80] [swscaler @ 0000023f871cb9c0] No accelerated colorspace conversion found from yuv420p to bgr48le.
+[swscaler @ 0000023f86146f80] [swscaler @ 0000023f871d8a00] No accelerated colorspace conversion found from yuv420p to bgr48le.
+[swscaler @ 0000023f86146f80] [swscaler @ 0000023f871f5a40] No accelerated colorspace conversion found from yuv420p to bgr48le.
+[swscaler @ 0000023f86146f80] [swscaler @ 0000023f87202ac0] No accelerated colorspace conversion found from yuv420p to bgr48le.
+[swscaler @ 0000023f86146f80] [swscaler @ 0000023f8720fb00] No accelerated colorspace conversion found from yuv420p to bgr48le.
+x265 [info]: HEVC encoder version 4.2+37-b81f650
+x265 [info]: build info [Windows][GCC 16.1.0][64 bit] 10bit
+x265 [info]: using cpu capabilities: MMX2 SSE2Fast LZCNT SSSE3 SSE4.2 AVX FMA3 BMI2 AVX2
+x265 [info]: Main 10 profile, Level-5 (Main tier)
+x265 [info]: Thread pool created using 8 threads
+x265 [info]: Slices                              : 1
+x265 [info]: frame threads / pool features       : 3 / wpp(22 rows)
+x265 [info]: Coding QT: max CU size, min CU size : 64 / 8
+x265 [info]: Residual QT: max TU size, max depth : 32 / 1 inter / 1 intra
+x265 [info]: ME / range / subpel / merge         : hex / 57 / 2 / 3
+x265 [info]: Keyframe min / max / scenecut / bias  : 23 / 250 / 40 / 5.00 
+x265 [info]: Lookahead / bframes / badapt        : 20 / 4 / 2
+x265 [info]: b-pyramid / weightp / weightb       : 1 / 1 / 0
+x265 [info]: References / ref-limit  cu / depth  : 3 / off / on
+x265 [info]: AQ: mode / str / qg-size / cu-tree  : 2 / 1.0 / 32 / 1
+x265 [info]: Rate Control / qCompress            : CRF-17.0 / 0.60
+x265 [info]: tools: rd=3 psy-rd=2.00 early-skip rskip mode=1 signhide tmvp
+x265 [info]: tools: b-intra strong-intra-smoothing lslices=8 deblock sao
+x265 [info]: tools: dhdr10-info
+Output #0, mp4, to 'C:\Users\soulwax\OneDrive - Biz\Videos\Music Videos\end girl - drool\out\_smoke\end_girl-drool_up2x_vibe3_hypercolor.mp4':
+  Metadata:
+    major_brand     : isom
+    minor_version   : 512
+    compatible_brands: isomiso2avc1mp41
+    encoder         : Lavf62.12.102
+  Stream #0:0: Video: hevc (hvc1 / 0x31637668), yuv420p10le(pc, bt709/unknown/unknown, progressive), 2560x1348, q=2-31, 23.98 fps, 24k tbn
+    Metadata:
+      encoder         : Lavc62.28.102 libx265
+    Side data:
+      CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
+  Stream #0:1(eng): Audio: aac (LC) (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 125 kb/s (default)
+    Metadata:
+      handler_name    : SoundHandler
+frame=    0 fps=0.0 q=0.0 size=       0KiB time=N/A bitrate=N/A speed=N/A elapsed=0:00:00.52    frame=    0 fps=0.0 q=0.0 size=       0KiB time=N/A bitrate=N/A speed=N/A elapsed=0:00:01.04    frame=    0 fps=0.0 q=0.0 size=       0KiB time=N/A bitrate=N/A speed=N/A elapsed=0:00:01.55    frame=    0 fps=0.0 q=0.0 size=       0KiB time=N/A bitrate=N/A speed=N/A elapsed=0:00:02.06    [mp4 @ 0000023f83cc7200] Starting second pass: moving the moov atom to the beginning of the file
+[out#0/mp4 @ 0000023f83c3ffc0] video:259KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:2KiB muxing overhead: 1.429757%
+frame=    1 fps=0.4 q=19.6 Lsize=     263KiB time=00:00:00.04 bitrate=51571.9kbits/s speed=0.0172x elapsed=0:00:02.42    
+x265 [info]: frame I:      1, Avg QP:19.63  kb/s: 50773.93
+
+encoded 1 frames in 2.27s (0.44 fps), 50773.93 kb/s, Avg QP:19.63

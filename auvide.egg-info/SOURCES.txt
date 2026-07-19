@@ -1,0 +1,11 @@
+README.md
+grade.py
+gui.py
+pyproject.toml
+upscale_hdr.py
+auvide.egg-info/PKG-INFO
+auvide.egg-info/SOURCES.txt
+auvide.egg-info/dependency_links.txt
+auvide.egg-info/entry_points.txt
+auvide.egg-info/requires.txt
+auvide.egg-info/top_level.txt

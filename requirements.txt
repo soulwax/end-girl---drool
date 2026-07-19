@@ -1,0 +1,12 @@
+# auvide runtime dependencies (Python packages only).
+#
+# The heavy binaries — ffmpeg, ffprobe, realesrgan-ncnn-vulkan + models — are
+# NOT pip packages; provision them into ./bin with:  powershell -File setup.ps1
+#
+# Install:  pip install -r requirements.txt      (or: uv pip install -r requirements.txt)
+
+# Live before/after grade preview in the GUI (image load/resize/composite).
+pillow>=10.0
+
+# Optional: drag-and-drop a video onto the GUI window. Uncomment to enable.
+# tkinterdnd2>=0.4

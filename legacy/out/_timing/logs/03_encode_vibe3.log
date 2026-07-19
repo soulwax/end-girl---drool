@@ -1,0 +1,77 @@
+
+================================================================================
+2026-07-05 09:17:02
+C:\Users\soulwax\scoop\shims\ffmpeg.EXE -hide_banner -nostdin -y -framerate 24000/1001 -start_number 1 -i "C:\Users\soulwax\OneDrive - Biz\Videos\Music Videos\end girl - drool\out\_timing_work\upscaled\frame_%08d.jpg" -i "C:\Users\soulwax\OneDrive - Biz\Videos\Music Videos\end girl - drool\end_girl-drool.mp4" -map 0:v:0 -map 1:a? -map_metadata 1 -vf eq=saturation=1.72:contrast=1.2:brightness=0.012:gamma=0.94,unsharp=5:5:0.65:3:3:0.16,format=yuv420p10le -c:v libx265 -preset medium -crf 17 -pix_fmt yuv420p10le -color_primaries bt709 -color_trc bt709 -colorspace bt709 -tag:v hvc1 -c:a copy -shortest -movflags +faststart "C:\Users\soulwax\OneDrive - Biz\Videos\Music Videos\end girl - drool\out\_timing\end_girl-drool_up2x_vibe3_hypercolor.mp4"
+
+Input #0, image2, from 'C:\Users\soulwax\OneDrive - Biz\Videos\Music Videos\end girl - drool\out\_timing_work\upscaled\frame_%08d.jpg':
+  Duration: 00:00:01.00, start: 0.000000, bitrate: N/A
+  Stream #0:0: Video: mjpeg (Baseline), yuvj420p(pc, bt470bg/unknown/unknown), 2560x1348, 23.98 fps, 23.98 tbr, 23.98 tbn
+Input #1, mov,mp4,m4a,3gp,3g2,mj2, from 'C:\Users\soulwax\OneDrive - Biz\Videos\Music Videos\end girl - drool\end_girl-drool.mp4':
+  Metadata:
+    major_brand     : isom
+    minor_version   : 512
+    compatible_brands: isomiso2avc1mp41
+    encoder         : Lavf58.3.100
+  Duration: 00:03:41.39, start: 0.000000, bitrate: 1253 kb/s
+  Stream #1:0[0x1](und): Video: h264 (Main) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 1280x674 [SAR 1:1 DAR 640:337], 1121 kb/s, 23.98 fps, 23.98 tbr, 90k tbn (default)
+    Metadata:
+      handler_name    : VideoHandler
+  Stream #1:1[0x2](eng): Audio: aac (LC) (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 125 kb/s (default)
+    Metadata:
+      handler_name    : SoundHandler
+Stream mapping:
+  Stream #0:0 -> #0:0 (mjpeg (native) -> hevc (libx265))
+  Stream #1:1 -> #0:1 (copy)
+[swscaler @ 000001fb8b7b22c0] deprecated pixel format used, make sure you did set range correctly
+[swscaler @ 000001fb8bb19cc0] No accelerated colorspace conversion found from yuv420p to bgr48le.
+[swscaler @ 000001fb8bb19cc0] [swscaler @ 000001fb8d4f4e00] No accelerated colorspace conversion found from yuv420p to bgr48le.
+[swscaler @ 000001fb8bb19cc0] [swscaler @ 000001fb8d504740] No accelerated colorspace conversion found from yuv420p to bgr48le.
+[swscaler @ 000001fb8bb19cc0] [swscaler @ 000001fb8d514080] No accelerated colorspace conversion found from yuv420p to bgr48le.
+[swscaler @ 000001fb8bb19cc0] [swscaler @ 000001fb8d5239c0] No accelerated colorspace conversion found from yuv420p to bgr48le.
+[swscaler @ 000001fb8bb19cc0] [swscaler @ 000001fb8d533300] No accelerated colorspace conversion found from yuv420p to bgr48le.
+[swscaler @ 000001fb8bb19cc0] [swscaler @ 000001fb8d540340] No accelerated colorspace conversion found from yuv420p to bgr48le.
+[swscaler @ 000001fb8bb19cc0] [swscaler @ 000001fb8d55d380] No accelerated colorspace conversion found from yuv420p to bgr48le.
+[swscaler @ 000001fb8bb19cc0] [swscaler @ 000001fb8d56a400] No accelerated colorspace conversion found from yuv420p to bgr48le.
+[swscaler @ 000001fb8bb19cc0] [swscaler @ 000001fb8d577440] No accelerated colorspace conversion found from yuv420p to bgr48le.
+x265 [info]: HEVC encoder version 4.2+37-b81f650
+x265 [info]: build info [Windows][GCC 16.1.0][64 bit] 10bit
+x265 [info]: using cpu capabilities: MMX2 SSE2Fast LZCNT SSSE3 SSE4.2 AVX FMA3 BMI2 AVX2
+x265 [info]: Main 10 profile, Level-5 (Main tier)
+x265 [info]: Thread pool created using 8 threads
+x265 [info]: Slices                              : 1
+x265 [info]: frame threads / pool features       : 3 / wpp(22 rows)
+x265 [info]: Coding QT: max CU size, min CU size : 64 / 8
+x265 [info]: Residual QT: max TU size, max depth : 32 / 1 inter / 1 intra
+x265 [info]: ME / range / subpel / merge         : hex / 57 / 2 / 3
+x265 [info]: Keyframe min / max / scenecut / bias  : 23 / 250 / 40 / 5.00 
+x265 [info]: Lookahead / bframes / badapt        : 20 / 4 / 2
+x265 [info]: b-pyramid / weightp / weightb       : 1 / 1 / 0
+x265 [info]: References / ref-limit  cu / depth  : 3 / off / on
+x265 [info]: AQ: mode / str / qg-size / cu-tree  : 2 / 1.0 / 32 / 1
+x265 [info]: Rate Control / qCompress            : CRF-17.0 / 0.60
+x265 [info]: tools: rd=3 psy-rd=2.00 early-skip rskip mode=1 signhide tmvp
+x265 [info]: tools: b-intra strong-intra-smoothing lslices=8 deblock sao
+x265 [info]: tools: dhdr10-info
+Output #0, mp4, to 'C:\Users\soulwax\OneDrive - Biz\Videos\Music Videos\end girl - drool\out\_timing\end_girl-drool_up2x_vibe3_hypercolor.mp4':
+  Metadata:
+    major_brand     : isom
+    minor_version   : 512
+    compatible_brands: isomiso2avc1mp41
+    encoder         : Lavf62.12.102
+  Stream #0:0: Video: hevc (hvc1 / 0x31637668), yuv420p10le(pc, bt709/unknown/unknown, progressive), 2560x1348, q=2-31, 23.98 fps, 24k tbn
+    Metadata:
+      encoder         : Lavc62.28.102 libx265
+    Side data:
+      CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
+  Stream #0:1(eng): Audio: aac (LC) (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 125 kb/s (default)
+    Metadata:
+      handler_name    : SoundHandler
+frame=    0 fps=0.0 q=0.0 size=       0KiB time=N/A bitrate=N/A speed=N/A elapsed=0:00:00.52    frame=    0 fps=0.0 q=0.0 size=       0KiB time=N/A bitrate=N/A speed=N/A elapsed=0:00:01.05    frame=    0 fps=0.0 q=0.0 size=       0KiB time=N/A bitrate=N/A speed=N/A elapsed=0:00:01.56    frame=    0 fps=0.0 q=0.0 size=       0KiB time=N/A bitrate=N/A speed=N/A elapsed=0:00:02.08    frame=    0 fps=0.0 q=0.0 size=       0KiB time=N/A bitrate=N/A speed=N/A elapsed=0:00:02.59    frame=    0 fps=0.0 q=0.0 size=       0KiB time=N/A bitrate=N/A speed=N/A elapsed=0:00:03.10    frame=    1 fps=0.3 q=18.3 size=       0KiB time=-00:00:00.04 bitrate=N/A speed=N/A elapsed=0:00:03.62    frame=    1 fps=0.2 q=18.5 size=     256KiB time=00:00:00.00 bitrate=N/A speed=   0x elapsed=0:00:04.14    frame=    1 fps=0.2 q=18.5 size=     256KiB time=00:00:00.00 bitrate=N/A speed=   0x elapsed=0:00:04.66    frame=    1 fps=0.2 q=20.0 size=     256KiB time=00:00:00.04 bitrate=50290.2kbits/s speed=0.00807x elapsed=0:00:05.16    frame=    1 fps=0.2 q=20.0 size=     256KiB time=00:00:00.04 bitrate=50290.2kbits/s speed=0.00733x elapsed=0:00:05.68    frame=    1 fps=0.2 q=22.2 size=     256KiB time=00:00:00.08 bitrate=25144.8kbits/s speed=0.0134x elapsed=0:00:06.21    frame=    5 fps=0.7 q=18.2 size=     768KiB time=00:00:00.16 bitrate=37713.2kbits/s speed=0.0249x elapsed=0:00:06.71    frame=    5 fps=0.7 q=18.2 size=     768KiB time=00:00:00.16 bitrate=37713.2kbits/s speed=0.0231x elapsed=0:00:07.23    frame=    5 fps=0.6 q=18.2 size=     768KiB time=00:00:00.16 bitrate=37713.2kbits/s speed=0.0215x elapsed=0:00:07.75    frame=    5 fps=0.6 q=18.2 size=     768KiB time=00:00:00.16 bitrate=37713.2kbits/s speed=0.0202x elapsed=0:00:08.27    frame=    7 fps=0.8 q=18.4 size=    1024KiB time=00:00:00.25 bitrate=33522.3kbits/s speed=0.0285x elapsed=0:00:08.78    frame=    7 fps=0.8 q=19.9 size=    1024KiB time=00:00:00.29 bitrate=28733.4kbits/s speed=0.0314x elapsed=0:00:09.29    frame=    7 fps=0.7 q=19.9 size=    1024KiB time=00:00:00.29 bitrate=28733.4kbits/s speed=0.0298x elapsed=0:00:09.80    frame=    7 fps=0.7 q=22.1 size=    1024KiB time=00:00:00.33 bitrate=25141.7kbits/s speed=0.0323x elapsed=0:00:10.32    frame=    7 fps=0.6 q=22.1 size=    1024KiB time=00:00:00.33 bitrate=25141.7kbits/s speed=0.0308x elapsed=0:00:10.83    frame=   11 fps=1.0 q=20.0 size=    1536KiB time=00:00:00.45 bitrate=27426.9kbits/s speed=0.0404x elapsed=0:00:11.35    frame=   11 fps=0.9 q=20.0 size=    1536KiB time=00:00:00.45 bitrate=27426.9kbits/s speed=0.0387x elapsed=0:00:11.86    frame=   11 fps=0.9 q=20.0 size=    1536KiB time=00:00:00.45 bitrate=27426.9kbits/s speed=0.037x elapsed=0:00:12.39    frame=   11 fps=0.9 q=22.1 size=    1536KiB time=00:00:00.50 bitrate=25141.4kbits/s speed=0.0388x elapsed=0:00:12.91    frame=   15 fps=1.1 q=20.1 size=    2048KiB time=00:00:00.62 bitrate=26817.3kbits/s speed=0.0466x elapsed=0:00:13.42    frame=   15 fps=1.1 q=20.1 size=    2048KiB time=00:00:00.62 bitrate=26817.3kbits/s speed=0.0449x elapsed=0:00:13.94    frame=   15 fps=1.0 q=20.1 size=    2048KiB time=00:00:00.62 bitrate=26817.3kbits/s speed=0.0432x elapsed=0:00:14.47    frame=   19 fps=1.3 q=19.2 size=    2560KiB time=00:00:00.75 bitrate=27934.6kbits/s speed=0.0501x elapsed=0:00:14.99    frame=   19 fps=1.2 q=20.0 size=    2560KiB time=00:00:00.79 bitrate=26464.3kbits/s speed=0.0511x elapsed=0:00:15.50    frame=   19 fps=1.2 q=20.0 size=    2560KiB time=00:00:00.79 bitrate=26464.3kbits/s speed=0.0495x elapsed=0:00:16.01    [mp4 @ 000001fb8b93a040] Starting second pass: moving the moov atom to the beginning of the file
+[out#0/mp4 @ 000001fb89023a00] video:3303KiB audio:16KiB subtitle:0KiB other streams:0KiB global headers:2KiB muxing overhead: 0.135646%
+frame=   24 fps=1.5 q=19.9 Lsize=    3323KiB time=00:00:00.91 bitrate=29670.6kbits/s speed=0.0565x elapsed=0:00:16.24    
+x265 [info]: frame I:      1, Avg QP:18.28  kb/s: 63812.86
+x265 [info]: frame P:      7, Avg QP:18.62  kb/s: 44057.88
+x265 [info]: frame B:     16, Avg QP:21.47  kb/s: 17283.03
+x265 [info]: Weighted P-Frames: Y:57.1% UV:57.1%
+
+encoded 24 frames in 16.17s (1.48 fps), 27031.11 kb/s, Avg QP:20.51

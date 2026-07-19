@@ -1,0 +1,28 @@
+input: end_girl-drool.mp4
+source: 1280x674 at 24000/1001, audio=True
+model: realesr-animevideov3-x2
+work: C:\Users\soulwax\OneDrive - Biz\Videos\Music Videos\end girl - drool\out\_work\end_girl-drool_s2_realesr-animevideov3-x2_jpg
+output: C:\Users\soulwax\OneDrive - Biz\Videos\Music Videos\end girl - drool\out
+running: ffmpeg.EXE (log: C:\Users\soulwax\OneDrive - Biz\Videos\Music Videos\end girl - drool\out\logs\01_extract_frames.log)
+extract: wrote 5308 frames
+running: realesrgan-ncnn-vulkan.exe (log: C:\Users\soulwax\OneDrive - Biz\Videos\Music Videos\end girl - drool\out\logs\02_realesrgan_upscale.log)
+Traceback (most recent call last):
+  File "C:\Users\soulwax\OneDrive - Biz\Videos\Music Videos\end girl - drool\vibrant_upscale.py", line 518, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "C:\Users\soulwax\OneDrive - Biz\Videos\Music Videos\end girl - drool\vibrant_upscale.py", line 467, in main
+    upscale_frames(
+    ~~~~~~~~~~~~~~^
+        realesrgan,
+        ^^^^^^^^^^^
+    ...<7 lines>...
+        logs_dir / "02_realesrgan_upscale.log",
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\soulwax\OneDrive - Biz\Videos\Music Videos\end girl - drool\vibrant_upscale.py", line 309, in upscale_frames
+    run_logged(cmd, log_path)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\soulwax\OneDrive - Biz\Videos\Music Videos\end girl - drool\vibrant_upscale.py", line 117, in run_logged
+    raise RuntimeError(f"Command failed with exit code {return_code}. See log: {log_path}")
+RuntimeError: Command failed with exit code 3221225477. See log: C:\Users\soulwax\OneDrive - Biz\Videos\Music Videos\end girl - drool\out\logs\02_realesrgan_upscale.log
