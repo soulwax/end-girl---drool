@@ -105,13 +105,18 @@ Or double-click **`run-gui.bat`**. Two tabs:
 - **Render** — pick an input, set scale / model / HDR / encoder, hit **Start**.
   "Show command" prints the equivalent CLI; **Cancel** stops the run (re-launch
   with Resume ticked to continue).
+- **Render** extras: **encoder preset**, **include-audio**, **open-when-done**,
+  **notify + sleep-when-done** (for overnight jobs), a **Trim** (start/length)
+  for quick test renders, and **Batch** (render every video in `input/`).
 - **Grade & Preview** — the frame loads automatically; **scrub the timeline**
   (or ◀ ▶) to check the grade anywhere in the clip. Dial the look with live
-  sliders (saturation, vibrance, contrast, midtones, warmth, sharpen) and watch
-  a real **before/after** — drag the image to move the wipe divider, **hold
-  Space** (or the button) to flash the untouched original, **double-click** any
-  slider to reset it. The grade you tune here is exactly what the render applies
-  (both use `grade.py`), so you never wait for a full run to judge the look.
+  sliders (exposure, saturation, vibrance, contrast, midtones, warmth, tint,
+  sharpen) and watch a real **before/after** — drag the image to move the wipe
+  divider, **hold Space** to flash the untouched original, **double-click** any
+  slider to reset it, and **Save…** your look as a named preset (right-click to
+  delete). Hit **AI upscale** + **1:1** to pixel-peek the actual Real-ESRGAN
+  detail before committing. The grade you tune is exactly what the render
+  applies (both use `grade.py`).
 
 No GUI? Get the same comparison from the CLI without a full run:
 
@@ -124,6 +129,8 @@ python upscale_hdr.py --preview --at 25,95 # at chosen seconds -> output/preview
 
 | flag | default | meaning |
 |------|---------|---------|
+| `--style NAME` | | one-tap look (Vibrant HDR / Cinematic / Natural / Punchy SDR / Sharp Photo / Clean); explicit flags still win |
+| `--recipe FILE` / `--save-recipe FILE` | | load / save a full job recipe (`.json`) |
 | `--scale {2,3,4}` | `2` | upscale factor |
 | `--model {animevideo,x4plus,x4plus-anime}` | `animevideo` | `animevideo` = fast, denoises, best for real video; `x4plus` = sharper photographic detail |
 | `--vibrance {none,subtle,vibrant,max}` | `vibrant` | grade **preset** — the base for the knobs below |
@@ -140,6 +147,10 @@ python upscale_hdr.py --preview --at 25,95 # at chosen seconds -> output/preview
 | `--hdr-gain F` | `1.5` | HDR highlight expansion (HDR mode only) |
 | `--preview` | | render before/after grade stills to `output/preview/`, then exit |
 | `--at S,S,…` | *(20/50/80%)* | timestamps (seconds) for `--preview` |
+| `--upscale` | | with `--preview`: AI-upscale the "after" half (see real detail) |
+| `--start S` / `--duration S` | | trim: render only a section (great for tests) |
+| `--no-audio` | | drop the audio track |
+| `--batch` | | render every video in `input/` sequentially |
 | `--chunk N` | `300` | frames per encode chunk (bounds disk use) |
 | `--gpu N` | `0` | Real-ESRGAN GPU id (`-1` = CPU) |
 | `--tile N` | `0` | tile size (0 = auto); lower it if you hit VRAM OOM |
@@ -168,10 +179,12 @@ The `x4plus` model is sharper but slower and needs more VRAM.
 
 ## Roadmap
 
-- ✅ **GUI front-end** — `gui.py`, a Tkinter window over the CLI (see above).
+- ✅ **GUI front-end** — `gui.py`, a Tkinter window over the CLI.
 - ✅ **Live grade preview** — before/after wipe + sliders, shared with the render.
+- ✅ **AI upscale preview** (1:1 pixel-peek), **saved presets**, **trim**, **batch**,
+  **notify/sleep-when-done**, **accent themes**.
 - **Drag-and-drop** onto the GUI window (needs the optional `tkinterdnd2` package).
-- **Standalone `.exe`** — package GUI + `bin/` with PyInstaller for double-click use.
+- **Standalone `.exe`** — package with PyInstaller for double-click use.
 - **QSV HDR validation** — confirm/tune the `--encoder qsv` HDR10 metadata path.
 
 ## Credits

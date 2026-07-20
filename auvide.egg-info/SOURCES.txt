@@ -2,6 +2,7 @@ README.md
 grade.py
 gui.py
 pyproject.toml
+tools.py
 upscale_hdr.py
 auvide.egg-info/PKG-INFO
 auvide.egg-info/SOURCES.txt

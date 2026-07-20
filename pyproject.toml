@@ -28,4 +28,4 @@ auvide = "upscale_hdr:main"
 auvide-gui = "gui:main"
 
 [tool.setuptools]
-py-modules = ["upscale_hdr", "gui", "grade"]
+py-modules = ["upscale_hdr", "gui", "grade", "tools", "recipe"]

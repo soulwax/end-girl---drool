@@ -27,9 +27,10 @@ import time
 from pathlib import Path
 
 import tkinter as tk
-from tkinter import ttk, filedialog, messagebox
+from tkinter import ttk, filedialog, messagebox, simpledialog
 
 import grade
+import recipe as recipes
 import tools
 
 try:
@@ -206,6 +207,11 @@ class App:
         self._show_orig = False
         self._ab_off_after = None
         self._preset_defaults = grade.PRESETS["vibrant"]
+        self._grade_src = None      # path the grade worker reads (source or AI-upscaled)
+        self._ai_active = False     # showing the AI-upscaled frame?
+        self._queue = []            # batch queue of input videos
+        self._qidx = 0
+        self.custom = {}            # user-saved grade presets {name: {knobs}}
         root.title("auvide  ·  AI upscale + vibrant HDR10")
         root.minsize(960, 740)
         self.style = apply_theme(root)
@@ -261,8 +267,12 @@ class App:
         self.v_preset = tk.StringVar(value="medium")
         self.v_audio = tk.BooleanVar(value=True)
         self.v_open = tk.BooleanVar(value=True)
+        self.v_notify = tk.BooleanVar(value=True)
+        self.v_sleep = tk.BooleanVar(value=False)
+        self.v_batch = tk.BooleanVar(value=False)
         self.v_start = tk.DoubleVar(value=0.0)
         self.v_dur = tk.DoubleVar(value=0.0)   # 0 = to end
+        self.v_zoom = tk.BooleanVar(value=False)   # 1:1 pixel-peek in preview
         self.v_status = tk.StringVar(value="Ready — choose a video to begin.")
         self.v_elapsed = tk.StringVar(value="")
         self.v_plan = tk.StringVar(value="No file selected.")
@@ -335,6 +345,11 @@ class App:
         e_out.grid(row=1, column=1, sticky="ew", **pad)
         e_out.bind("<Key>", lambda *_: setattr(self, "out_edited", True))
         ttk.Button(files, text="Browse…", command=self._browse_out).grid(row=1, column=2, **pad)
+        stf = ttk.Frame(files); stf.grid(row=2, column=0, columnspan=3, sticky="w", pady=(6, 0))
+        ttk.Label(stf, text="Style", style="Muted.TLabel").pack(side="left", padx=(6, 8))
+        for name in recipes.STYLES:
+            ttk.Button(stf, text=name, style="Chip.TButton",
+                       command=lambda n=name: self._apply_style(n)).pack(side="left", padx=3)
 
         strip = tk.Frame(body, background=FIELD, highlightbackground=LINE, highlightthickness=1)
         strip.grid(row=1, column=0, sticky="ew", pady=(4, 8))
@@ -407,6 +422,15 @@ class App:
         Tooltip(sp1, "Skip this many seconds from the start.")
         Tooltip(sp2, "Process only this many seconds (0 = to the end).")
 
+        num3 = ttk.Frame(opt); num3.grid(row=6, column=0, columnspan=4, sticky="ew", pady=(4, 2))
+        ttk.Checkbutton(num3, text="Notify when done", variable=self.v_notify).pack(
+            side="left", padx=(6, 8))
+        ttk.Checkbutton(num3, text="Sleep PC when done", variable=self.v_sleep).pack(
+            side="left", padx=8)
+        cbb = ttk.Checkbutton(num3, text="Batch: all videos in input/", variable=self.v_batch)
+        cbb.pack(side="left", padx=8)
+        Tooltip(cbb, "Render every video in input/ sequentially with these settings.")
+
         bar = ttk.Frame(body); bar.grid(row=3, column=0, sticky="ew", pady=(8, 4))
         self.btn_start = ttk.Button(bar, text="▶  Start", style="Accent.TButton", command=self._start)
         self.btn_start.pack(side="left")
@@ -455,6 +479,13 @@ class App:
         self.btn_ab.bind("<ButtonPress-1>", lambda e: self._ab(True))
         self.btn_ab.bind("<ButtonRelease-1>", lambda e: self._ab(False))
         Tooltip(self.btn_ab, "Hold (or press Space) to flash the untouched original.")
+        self.chk_zoom = ttk.Checkbutton(top, text="1:1", variable=self.v_zoom,
+                                        command=lambda: self._composite() if self._loaded else None)
+        self.chk_zoom.grid(row=0, column=5, padx=(10, 4))
+        Tooltip(self.chk_zoom, "Pixel-peek at 100% (center crop) — best with AI upscale.")
+        self.btn_ai = ttk.Button(top, text="AI upscale", command=self._kick_ai)
+        self.btn_ai.grid(row=0, column=6)
+        Tooltip(self.btn_ai, "Run Real-ESRGAN on this frame to see real upscale detail (~15s here).")
         ttk.Label(body, textvariable=self.v_pstatus, style="Muted.TLabel").grid(
             row=4, column=0, sticky="w", padx=4, pady=(6, 0))
         self.root.bind("<KeyPress-space>", lambda e: self._ab(True))
@@ -491,13 +522,8 @@ class App:
             ttk.Label(gf, textvariable=self.g_labels[key], style="Val.TLabel").grid(
                 row=i, column=2, padx=(10, 4))
 
-        chips = ttk.Frame(body); chips.grid(row=3, column=0, sticky="w", pady=(8, 0))
-        ttk.Label(chips, text="Presets", style="Muted.TLabel").pack(side="left", padx=(4, 8))
-        for name in grade.PRESETS:
-            ttk.Button(chips, text=name.capitalize(), style="Chip.TButton",
-                       command=lambda n=name: self._apply_grade_preset(n)).pack(side="left", padx=3)
-        ttk.Button(chips, text="Reset", style="Chip.TButton",
-                   command=lambda: self._apply_grade_preset("vibrant")).pack(side="left", padx=(12, 3))
+        self._chips = ttk.Frame(body); self._chips.grid(row=3, column=0, sticky="w", pady=(8, 0))
+        self._build_chips()
 
     # ---- helpers --------------------------------------------------------
     def _set_accent(self, name):
@@ -527,8 +553,59 @@ class App:
         for k, *_ in GRADE_SLIDERS:
             self.g_vars[k].set(getattr(g, k))
 
+    def _apply_style(self, name):
+        """One-tap Style: set every render + grade control from a named Recipe."""
+        r = recipes.STYLES[name]
+        self.v_scale.set(str(r.scale)); self.v_model.set(r.model); self.v_hdr.set(r.hdr)
+        self.v_enc.set(r.encoder); self.v_crf.set(r.crf); self.v_preset.set(r.preset)
+        self.v_hdrgain.set(r.hdr_gain)
+        for k, *_ in GRADE_SLIDERS:
+            if k in r.grade:
+                self.g_vars[k].set(r.grade[k])
+        self._preset_defaults = r.to_grade()
+
     def _reset_slider(self, key):
         self.g_vars[key].set(getattr(self._preset_defaults, key))
+
+    def _build_chips(self):
+        for w in self._chips.winfo_children():
+            w.destroy()
+        ttk.Label(self._chips, text="Presets", style="Muted.TLabel").pack(side="left", padx=(4, 8))
+        for name in grade.PRESETS:
+            ttk.Button(self._chips, text=name.capitalize(), style="Chip.TButton",
+                       command=lambda n=name: self._apply_grade_preset(n)).pack(side="left", padx=3)
+        for name in self.custom:
+            b = ttk.Button(self._chips, text="★ " + name, style="Chip.TButton",
+                           command=lambda n=name: self._apply_custom(n))
+            b.pack(side="left", padx=3)
+            b.bind("<Button-3>", lambda e, n=name: self._delete_custom(n))
+        ttk.Button(self._chips, text="＋ Save…", style="Chip.TButton",
+                   command=self._save_preset).pack(side="left", padx=(12, 3))
+
+    def _save_preset(self):
+        name = simpledialog.askstring("Save grade preset", "Preset name:", parent=self.root)
+        if not name or not name.strip():
+            return
+        name = name.strip()
+        if name in grade.PRESETS:
+            messagebox.showwarning("auvide", "That name is a built-in preset — choose another.")
+            return
+        self.custom[name] = {k: round(self.g_vars[k].get(), 4) for k, *_ in GRADE_SLIDERS}
+        self._save_config()
+        self._build_chips()
+
+    def _apply_custom(self, name):
+        g = self.custom.get(name, {})
+        for k, *_ in GRADE_SLIDERS:
+            if k in g:
+                self.g_vars[k].set(g[k])
+        self._preset_defaults = grade.from_overrides(grade.PRESETS["vibrant"], **g)
+
+    def _delete_custom(self, name):
+        if messagebox.askyesno("auvide", f"Delete preset '{name}'?"):
+            self.custom.pop(name, None)
+            self._save_config()
+            self._build_chips()
 
     def _on_grade_change(self, key):
         self.g_labels[key].set(self._fmt(self.g_vars[key].get()))
@@ -714,13 +791,46 @@ class App:
         g = self._current_grade()
         threading.Thread(target=self._grade_worker, args=(gen, g), daemon=True).start()
 
-    def _grade_worker(self, gen, g):
+    def _kick_ai(self):
+        if not HAVE_PIL or self._orig is None:
+            return
+        if not tools.realesrgan() or not tools.models_dir():
+            self.v_pstatus.set("realesrgan/models not found — run setup.ps1.")
+            return
+        self.btn_ai.configure(state="disabled")
+        self.v_pstatus.set("AI upscaling this frame… (~15s on this GPU)")
+        self._pgen += 1
+        threading.Thread(target=self._ai_worker, args=(self._pgen,), daemon=True).start()
+
+    def _ai_worker(self, gen):
         src = PREVIEW_DIR / "src.png"
+        up = PREVIEW_DIR / "up.png"
+        scale = int(self.v_scale.get())
+        name, native = {"animevideo": ("realesr-animevideov3", None),
+                        "x4plus": ("realesrgan-x4plus", 4),
+                        "x4plus-anime": ("realesrgan-x4plus-anime", 4)}[self.v_model.get()]
+        rs = 4 if (native == 4 and scale != 4) else scale
+        try:
+            r = subprocess.run([tools.realesrgan(), "-i", str(src), "-o", str(up), "-n", name,
+                                "-s", str(rs), "-m", str(tools.models_dir()),
+                                "-g", str(self.v_gpu.get()), "-f", "png"],
+                               creationflags=NOWINDOW, capture_output=True, text=True, timeout=300)
+            if r.returncode != 0 or not up.exists():
+                self.q.put(("perror", f"AI upscale failed: {r.stderr[-200:]}"))
+                return
+            up_img = Image.open(up).convert("RGB"); up_img.load()
+            base = self._orig.resize(up_img.size, Image.BICUBIC)   # fair A/B: bicubic vs AI
+            self.q.put(("ai", gen, base, str(up)))
+        except Exception as e:
+            self.q.put(("perror", f"AI upscale error: {e}"))
+
+    def _grade_worker(self, gen, g):
+        src = self._grade_src or str(PREVIEW_DIR / "src.png")
         out = PREVIEW_DIR / f"g{gen % 3}.png"
         vf = grade.build_chain(g, out_format="rgb24", working="gbrpf32le")
         try:
             r = subprocess.run([str(FFMPEG), "-y", "-i", str(src), "-vf", vf, str(out)],
-                               creationflags=NOWINDOW, capture_output=True, text=True, timeout=60)
+                               creationflags=NOWINDOW, capture_output=True, text=True, timeout=120)
             if r.returncode != 0:
                 self.q.put(("perror", f"grade render failed: {r.stderr[-300:]}"))
                 return
@@ -734,6 +844,13 @@ class App:
         scale = min(self.PW / w, self.PH / h)
         return img.resize((max(1, int(w * scale)), max(1, int(h * scale))))
 
+    def _crop11(self, img):
+        """Center crop a canvas-sized region at native resolution (pixel-peek)."""
+        w, h = img.size
+        cw, ch = min(w, self.PW), min(h, self.PH)
+        x, y = (w - cw) // 2, (h - ch) // 2
+        return img.crop((x, y, x + cw, y + ch))
+
     def _label(self, d, x0, x1, y, text):
         d.rectangle([x0, y, x1, y + 20], fill=(0, 0, 0))
         d.text((x0 + 6, y + 4), text, fill=(255, 255, 255))
@@ -741,7 +858,8 @@ class App:
     def _composite(self):
         if self._orig is None or self._graded is None:
             return
-        a = self._fit(self._orig); b = self._fit(self._graded)
+        tf = self._crop11 if self.v_zoom.get() else self._fit
+        a = tf(self._orig); b = tf(self._graded)
         w, h = a.size
         if self._show_orig:                       # A/B: flash the full original
             combo = a.copy()
@@ -821,16 +939,35 @@ class App:
     def _start(self):
         if self.proc is not None:
             return
-        if not self.v_in.get().strip() or not Path(self.v_in.get()).exists():
+        if self.v_batch.get():
+            vids = ([str(p) for p in sorted(INPUT_DIR.glob("*"))
+                     if p.suffix.lower() in VIDEO_EXTS] if INPUT_DIR.exists() else [])
+            if not vids:
+                messagebox.showerror("auvide", f"Batch: no videos in {INPUT_DIR}")
+                return
+            self._queue = vids
+        else:
+            self._queue = [self.v_in.get()]
+        self._qidx = 0
+        self._start_input(self._queue[0])
+
+    def _start_input(self, path):
+        if not path or not Path(path).exists():
             messagebox.showerror("auvide", "Input video not found.")
+            self._reset_buttons()
             return
         if not CLI.exists():
             messagebox.showerror("auvide", f"Cannot find upscale_hdr.py at {CLI}")
+            self._reset_buttons()
             return
+        self.out_edited = False
+        self.v_in.set(path)                       # updates output name + command
+        n = len(self._queue)
+        tag = f"[{self._qidx + 1}/{n}] " if n > 1 else ""
         cmd = self._build_command()
-        self._append("$ " + " ".join(cmd) + "\n\n", "cmd")
+        self._append(f"{tag}$ " + " ".join(cmd) + "\n\n", "cmd")
         self.pbar.configure(value=0)
-        self._set_status("Starting…")
+        self._set_status(f"{tag}Starting…")
         self.btn_start.configure(state="disabled")
         self.btn_cancel.configure(state="normal")
         self.btn_open.configure(state="disabled")
@@ -904,20 +1041,33 @@ class App:
                     elif kind == "exit":
                         self._on_exit(msg[1])
                     elif kind == "sample":
-                        self._dbg("poll sample gen=", msg[1], "cur=", self._fgen)
                         if msg[1] == self._fgen:      # ignore stale scrubs
                             self._orig = msg[2]
+                            self._grade_src = str(PREVIEW_DIR / "src.png")
+                            self._ai_active = False
                             self._loaded = True
-                            self.v_pstatus.set("Drag the image to wipe · Space = original · "
-                                               "double-click a slider to reset")
+                            if hasattr(self, "btn_ai"):
+                                self.btn_ai.configure(state="normal")
+                            self.v_pstatus.set("Drag to wipe · Space = original · dbl-click a "
+                                               "slider = reset · AI upscale = real detail")
+                            self._schedule_render()
+                    elif kind == "ai":
+                        if msg[1] == self._pgen:
+                            self._orig = msg[2]          # bicubic-upscaled source
+                            self._grade_src = msg[3]     # AI-upscaled png
+                            self._ai_active = True
+                            self.v_zoom.set(True)        # jump to 1:1 to show the detail
+                            self.btn_ai.configure(state="normal")
+                            self.v_pstatus.set("AI upscale — 1:1 detail (left bicubic · right AI). "
+                                               "Untick 1:1 to fit.")
                             self._schedule_render()
                     elif kind == "graded":
-                        self._dbg("poll graded gen=", msg[1], "cur=", self._pgen)
                         if msg[1] == self._pgen:
                             self._graded = msg[2]
                             self._composite()
                     elif kind == "perror":
-                        self._dbg("poll perror", msg[1])
+                        if hasattr(self, "btn_ai"):
+                            self.btn_ai.configure(state="normal")
                         self.v_pstatus.set(msg[1])
                     continue
                 low = "err" if "[error]" in msg else ("ok" if DONE_RE.search(msg) else None)
@@ -944,23 +1094,59 @@ class App:
         if self.cancelling:
             self._set_status("Cancelled — re-run with Resume to continue.", "muted")
             self.pbar.configure(value=0)
-        elif code == 0:
+            self.cancelling = False
+            self._queue = []
+            self._reset_buttons()
+            return
+        if code == 0:
             self.pbar.configure(value=100)
-            self._set_status("Done ✔  —  output ready", "ok")
             self.btn_open.configure(state="normal")
             if self.v_open.get():
                 self._open_out()
+            if len(self._queue) > 1 and self._qidx < len(self._queue) - 1:   # batch: next
+                self._qidx += 1
+                self.proc = None
+                self._start_input(self._queue[self._qidx])
+                return
+            self._set_status("Done ✔  —  output ready", "ok")
+            if self.v_notify.get():
+                self._notify_done()
+            if self.v_sleep.get():
+                self._sleep_pc()
         else:
             self._set_status(f"Failed (exit {code}) — see log", "err")
-        self.cancelling = False
+            self._queue = []
         self._reset_buttons()
+
+    def _notify_done(self):
+        try:
+            self.root.deiconify(); self.root.lift(); self.root.focus_force(); self.root.bell()
+            t = tk.Toplevel(self.root); t.wm_overrideredirect(True); t.configure(bg=OK)
+            tk.Label(t, text="  ✔  auvide — render complete  ", bg=OK, fg="#0f1016",
+                     font=("Segoe UI Semibold", 11), padx=12, pady=9).pack()
+            self.root.update_idletasks()
+            x = self.root.winfo_rootx() + self.root.winfo_width() // 2 - 120
+            y = self.root.winfo_rooty() + 64
+            t.wm_geometry(f"+{x}+{y}")
+            t.after(3500, t.destroy)
+        except Exception:
+            pass
+
+    def _sleep_pc(self):
+        if sys.platform != "win32":
+            return
+        self._set_status("Render done — sleeping the PC in 8s…", "ok")
+        self.root.after(8000, lambda: subprocess.run(
+            ["rundll32.exe", "powrprof.dll,SetSuspendState", "0,1,0"],
+            creationflags=NOWINDOW))
 
     # ---- config ---------------------------------------------------------
     def _cfg_map(self):
         m = dict(scale=self.v_scale, model=self.v_model, hdr=self.v_hdr, encoder=self.v_enc,
                  crf=self.v_crf, hdrgain=self.v_hdrgain, chunk=self.v_chunk, gpu=self.v_gpu,
                  tile=self.v_tile, resume=self.v_resume, keep=self.v_keep, preset=self.v_preset,
-                 audio=self.v_audio, open_done=self.v_open, trim_start=self.v_start,
+                 audio=self.v_audio, open_done=self.v_open, notify=self.v_notify,
+                 sleep=self.v_sleep, batch=self.v_batch, trim_start=self.v_start,
                  trim_dur=self.v_dur)
         for k, *_ in GRADE_SLIDERS:
             m[f"g_{k}"] = self.g_vars[k]
@@ -974,6 +1160,8 @@ class App:
                     var.set(d[k])
             if d.get("accent") in ACCENTS:
                 self._set_accent(d["accent"])
+            self.custom = d.get("custom_presets") or {}
+            self._build_chips()
         except Exception:
             pass
 
@@ -982,6 +1170,7 @@ class App:
             CONFIG.parent.mkdir(parents=True, exist_ok=True)
             data = {k: v.get() for k, v in self._cfg_map().items()}
             data["accent"] = self.accent
+            data["custom_presets"] = self.custom
             CONFIG.write_text(json.dumps(data, indent=2))
         except Exception:
             pass

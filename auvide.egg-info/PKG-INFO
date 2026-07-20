@@ -31,21 +31,54 @@ back in untouched.
 
 ## Setup
 
-Requires **Python 3.8+** and a Vulkan-capable GPU (any modern integrated or
-discrete GPU works).
+Requires **Python 3.9+**, a **Vulkan-capable GPU** (any modern integrated or
+discrete GPU), and three prerequisites on your **PATH** — auvide does not bundle
+binaries, it uses your system package manager (canonical, fast, and cross-platform):
+
+| tool | why |
+|------|-----|
+| `ffmpeg` + `ffprobe` | decode / encode / color pipeline |
+| `realesrgan-ncnn-vulkan` | AI upscaler (GPU) |
+
+**Install the prerequisites:**
 
 ```powershell
-# 1. download ffmpeg, ffprobe, realesrgan + models into ./bin
+# Windows (scoop is canonical) — installs ffmpeg + realesrgan and caches models
 powershell -ExecutionPolicy Bypass -File .\setup.ps1
-
-# 2. Python deps (for the GUI's live grade preview)
-pip install -r requirements.txt          # or: uv pip install -r requirements.txt
+```
+```bash
+# macOS
+brew install ffmpeg realesrgan-ncnn-vulkan
+# Arch
+sudo pacman -S ffmpeg && yay -S realesrgan-ncnn-vulkan     # realesrgan from AUR
+# Ubuntu / Debian
+sudo apt install ffmpeg     # + realesrgan-ncnn-vulkan from the upstream release
+# Fedora
+sudo dnf install ffmpeg     # + realesrgan-ncnn-vulkan from the upstream release
 ```
 
-The heavy binaries in `bin/` are **not** committed (ffmpeg alone exceeds
-GitHub's 100 MB file limit) — `setup.ps1` fetches them. The only Python
-dependency is Pillow (live preview); everything else is stdlib. `pyproject.toml`
-also exposes `auvide` / `auvide-gui` console scripts if you `pip install .`.
+The **Real-ESRGAN models** (`.param`/`.bin`, data not binaries) are cached in
+`%LOCALAPPDATA%\auvide\models` (or `~/.cache/auvide/models`). `setup.ps1` fetches
+them; on other OSes drop the model files there, or install a realesrgan build
+that ships models beside its binary. auvide checks all of this up front and
+prints exactly what's missing.
+
+Then the Python dep (for the GUI's live preview): `pip install -r requirements.txt`
+(only Pillow; everything else is stdlib). `pyproject.toml` also exposes `auvide` /
+`auvide-gui` console scripts via `pip install .`.
+
+## Project layout
+
+```
+input/    <- put source videos here (CLI/GUI auto-pick a lone video)
+output/   <- renders land here
+legacy/   <- the earlier standalone vibrant_upscale.py, kept for reference
+```
+
+Binaries are **not** here — they live on your PATH (see Setup).
+
+With one video in `input/`, just run `python upscale_hdr.py` — no arguments
+needed. The GUI auto-loads it too.
 
 ---
 
@@ -86,11 +119,20 @@ Or double-click **`run-gui.bat`**. Two tabs:
 - **Render** — pick an input, set scale / model / HDR / encoder, hit **Start**.
   "Show command" prints the equivalent CLI; **Cancel** stops the run (re-launch
   with Resume ticked to continue).
-- **Grade & Preview** — **Load frame**, then dial the grade with live sliders
-  (saturation, vibrance, contrast, midtones, warmth, sharpen) and watch a real
-  **before/after** on that frame — drag anywhere on the image to move the wipe
-  divider. The grade you tune here is exactly what the render applies (both use
-  `grade.py`), so you never wait for a full run to judge the look.
+- **Grade & Preview** — the frame loads automatically; **scrub the timeline**
+  (or ◀ ▶) to check the grade anywhere in the clip. Dial the look with live
+  sliders (saturation, vibrance, contrast, midtones, warmth, sharpen) and watch
+  a real **before/after** — drag the image to move the wipe divider, **hold
+  Space** (or the button) to flash the untouched original, **double-click** any
+  slider to reset it. The grade you tune here is exactly what the render applies
+  (both use `grade.py`), so you never wait for a full run to judge the look.
+
+No GUI? Get the same comparison from the CLI without a full run:
+
+```powershell
+python upscale_hdr.py --preview            # before/after stills at 20/50/80%
+python upscale_hdr.py --preview --at 25,95 # at chosen seconds -> output/preview/
+```
 
 ### Options
 
@@ -110,6 +152,8 @@ Or double-click **`run-gui.bat`**. Two tabs:
 | `--warmth F` | | `-1` cool … `+1` warm (negative neutralizes a warm cast) |
 | `--sharpen F` | | unsharp amount, `0..1.5` |
 | `--hdr-gain F` | `1.5` | HDR highlight expansion (HDR mode only) |
+| `--preview` | | render before/after grade stills to `output/preview/`, then exit |
+| `--at S,S,…` | *(20/50/80%)* | timestamps (seconds) for `--preview` |
 | `--chunk N` | `300` | frames per encode chunk (bounds disk use) |
 | `--gpu N` | `0` | Real-ESRGAN GPU id (`-1` = CPU) |
 | `--tile N` | `0` | tile size (0 = auto); lower it if you hit VRAM OOM |

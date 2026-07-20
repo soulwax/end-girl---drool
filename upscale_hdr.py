@@ -34,6 +34,7 @@ import time
 from pathlib import Path
 
 import grade
+import recipe as recipes
 import tools
 
 HERE = Path(__file__).resolve().parent
@@ -162,7 +163,12 @@ def build_vf(args, info) -> str:
 
 
 def make_preview(args, src: Path, info: dict) -> None:
-    """Render before/after grade stills (source frame graded) and exit — no run."""
+    """Render before/after grade stills and exit — no full run.
+
+    Default: left = original, right = graded (source resolution, fast).
+    --upscale: right = AI-upscaled + graded, left = bicubic-upscaled original,
+    so you can judge real upscale detail before committing to a full run.
+    """
     grade_vf = grade.build_chain(resolve_grade(args), out_format="rgb24", working="gbrpf32le")
     dur = info["duration"]
     if args.at:
@@ -171,15 +177,33 @@ def make_preview(args, src: Path, info: dict) -> None:
         times = [round(dur * f, 1) for f in (0.2, 0.5, 0.8)] if dur else [5.0]
     pdir = OUTPUT_DIR / "preview"
     pdir.mkdir(parents=True, exist_ok=True)
-    # split -> grade one half -> stack side by side (left original, right graded)
-    vf = f"split=2[a][b];[a]format=rgb24[la];[b]{grade_vf}[lg];[la][lg]hstack=inputs=2"
-    print(f"[preview] {len(times)} before/after stills -> {pdir}")
+    tw, th = info["width"] * args.scale, info["height"] * args.scale
+    model_name, native = MODEL_MAP[args.model]
+    re_scale = 4 if (native == 4 and args.scale != 4) else args.scale
+    tag = "upscaled" if args.upscale else "grade"
+    print(f"[preview] {len(times)} before/after ({tag}) stills -> {pdir}")
     for t in times:
-        out = pdir / f"{src.stem}_t{int(t)}s.png"
-        run([str(FFMPEG), "-y", "-ss", str(t), "-i", str(src), "-frames:v", "1",
-             "-vf", vf, str(out)])
+        out = pdir / f"{src.stem}_t{int(t)}s_{tag}.png"
+        frame = pdir / "_frame.png"
+        run([str(FFMPEG), "-y", "-ss", str(t), "-i", str(src), "-frames:v", "1", str(frame)])
+        if args.upscale:
+            up = pdir / "_up.png"
+            run([str(REALESRGAN), "-i", str(frame), "-o", str(up), "-n", model_name,
+                 "-s", str(re_scale), "-m", str(MODELS), "-g", str(args.gpu), "-f", "png"])
+            down = f"scale={tw}:{th}:flags=lanczos," if re_scale != args.scale else ""
+            vf = (f"[1:v]scale={tw}:{th}:flags=bicubic,format=rgb24[la];"
+                  f"[0:v]{down}{grade_vf}[lg];[la][lg]hstack=inputs=2")
+            run([str(FFMPEG), "-y", "-i", str(up), "-i", str(frame),
+                 "-filter_complex", vf, str(out)])
+        else:
+            vf = f"split=2[a][b];[a]format=rgb24[la];[b]{grade_vf}[lg];[la][lg]hstack=inputs=2"
+            run([str(FFMPEG), "-y", "-i", str(frame), "-vf", vf, str(out)])
         print(f"  {out.name}")
-    print("[preview] done — left half = original, right half = graded")
+    for tmp in (pdir / "_frame.png", pdir / "_up.png"):   # scrub intermediates
+        tmp.unlink(missing_ok=True)
+    left = "bicubic-upscaled original" if args.upscale else "original"
+    right = "AI-upscaled + graded" if args.upscale else "graded"
+    print(f"[preview] done — left = {left}, right = {right}")
 
 
 def encode_cmd(args, info, in_pattern: str, start_number: int, out_file: Path) -> list[str]:
@@ -242,6 +266,11 @@ def main() -> None:
     ap.add_argument("--scale", type=int, default=2, choices=[2, 3, 4], help="upscale factor")
     ap.add_argument("--model", default="animevideo", choices=list(MODEL_MAP),
                     help="Real-ESRGAN model (animevideo=fast/video, x4plus=sharp photo)")
+    ap.add_argument("--style", choices=list(recipes.STYLES),
+                    help="one-tap named look (sets the knobs; explicit flags still win)")
+    ap.add_argument("--recipe", type=Path, help="load a saved recipe .json")
+    ap.add_argument("--save-recipe", type=Path, dest="save_recipe",
+                    help="write the effective recipe to .json and continue")
     ap.add_argument("--vibrance", default="vibrant", choices=list(grade.PRESETS),
                     help="grade preset (base for the --grade knobs below)")
     # per-knob grade overrides (default None -> take the preset's value)
@@ -260,6 +289,10 @@ def main() -> None:
     grp.add_argument("--preview", action="store_true",
                      help="render before/after grade stills (no full run) and exit")
     grp.add_argument("--at", help="comma-separated seconds for --preview (default: 20/50/80%%)")
+    grp.add_argument("--upscale", action="store_true",
+                     help="with --preview: AI-upscale the 'after' half (see real detail)")
+    ap.add_argument("--batch", action="store_true",
+                    help="process every video in ./input sequentially")
     ap.add_argument("--hdr", default="on", choices=["on", "off"],
                     help="remap to HDR10 (on) or stay SDR BT.709 (off)")
     ap.add_argument("--encoder", default="x265", choices=["x265", "qsv"],
@@ -278,7 +311,40 @@ def main() -> None:
     ap.add_argument("--dry-run", action="store_true", help="print the plan and exit")
     args = ap.parse_args()
 
+    # recipe / style overlay (explicit flags always win)
+    given = {a.split("=")[0] for a in sys.argv[1:] if a.startswith("--")}
+    if args.recipe:
+        recipes.apply_to_args(recipes.load(args.recipe), args, given)
+    if args.style:
+        recipes.apply_to_args(recipes.STYLES[args.style], args, given)
+    if args.save_recipe:
+        g = resolve_grade(args)
+        rc = recipes.Recipe(
+            scale=args.scale, model=args.model, hdr=args.hdr, encoder=args.encoder,
+            crf=args.crf, preset=args.preset, hdr_gain=args.hdr_gain,
+            grade={k: getattr(g, k) for k in recipes.GRADE_KNOBS},
+            trim_start=args.start, trim_dur=args.duration or 0.0, audio=not args.no_audio)
+        recipes.save(rc, args.save_recipe)
+        print(f"[recipe] saved -> {args.save_recipe}")
+
     check_deps()
+
+    if args.batch:
+        vids = ([p for p in sorted(INPUT_DIR.glob("*")) if p.suffix.lower() in VIDEO_EXTS]
+                if INPUT_DIR.exists() else [])
+        if not vids:
+            die(f"--batch: no videos found in {INPUT_DIR}")
+        passthrough = [a for a in sys.argv[1:] if a != "--batch"]
+        print(f"[batch] {len(vids)} videos in {INPUT_DIR}")
+        for i, v in enumerate(vids, 1):
+            print(f"\n===== batch {i}/{len(vids)}: {v.name} =====", flush=True)
+            r = subprocess.run([sys.executable, str(Path(__file__).resolve()), str(v)]
+                               + passthrough)
+            if r.returncode != 0:
+                print(f"[batch] {v.name} failed (exit {r.returncode}) — continuing")
+        print("\n[batch] done")
+        return
+
     src = resolve_input(args.input)
 
     info = probe(src)
@@ -323,8 +389,8 @@ def main() -> None:
           f"{fmt_eta(info['duration'])}")
     print(f"  target      {tw}x{th}  ({args.scale}x)")
     print(f"  model       {model_name}  (realesrgan -s {realesr_scale})")
-    print(f"  grade       {args.hdr.upper()}  vibrance={args.vibrance}  "
-          f"encoder={args.encoder}  crf={args.crf}")
+    style_s = f"style={args.style}  " if args.style else ""
+    print(f"  grade       {args.hdr.upper()}  {style_s}encoder={args.encoder}  crf={args.crf}")
     if args.start or args.duration:
         print(trim + f"   (~{expected} frames)")
     print(f"  chunks      {n_chunks} x {args.chunk} frames")
