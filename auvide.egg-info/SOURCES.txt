@@ -2,6 +2,8 @@ README.md
 grade.py
 gui.py
 pyproject.toml
+recipe.py
+stages.py
 tools.py
 upscale_hdr.py
 auvide.egg-info/PKG-INFO

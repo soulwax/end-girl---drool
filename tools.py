@@ -21,6 +21,7 @@ from pathlib import Path
 
 APP_CACHE = Path(os.environ.get("LOCALAPPDATA") or (Path.home() / ".cache")) / "auvide"
 MODELS_CACHE = APP_CACHE / "models"
+RIFE_MODELS_CACHE = APP_CACHE / "rife-models"
 
 INSTALL_HINT = (
     "Install the prerequisites, then retry:\n"
@@ -52,6 +53,29 @@ def ffprobe():
 
 def realesrgan():
     return _which("realesrgan-ncnn-vulkan", "realesrgan")
+
+
+def rife():
+    return _which("rife-ncnn-vulkan", "rife")
+
+
+def rife_model(name="rife-v4.6"):
+    """Locate a RIFE model folder (or None). Optional — only for interpolation."""
+    exe = rife()
+    if exe:
+        p = Path(exe)
+        if "scoop" in p.parts and "shims" in p.parts:   # scoop bundles models in app dir
+            i = p.parts.index("scoop")
+            cand = Path(*p.parts[:i + 1], "apps", "rife-ncnn-vulkan", "current", name)
+            if cand.exists():
+                return cand
+        near = p.resolve().parent / name                 # some installs: models beside exe
+        if near.exists():
+            return near
+    cache = RIFE_MODELS_CACHE / name
+    if cache.exists() and any(cache.glob("*.param")):
+        return cache
+    return None
 
 
 def models_dir():

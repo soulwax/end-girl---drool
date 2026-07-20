@@ -19,8 +19,8 @@ if (-not (Have scoop)) {
     exit 1
 }
 
-Write-Host "[deps] scoop install ffmpeg realesrgan-ncnn-vulkan ..."
-scoop install ffmpeg realesrgan-ncnn-vulkan
+Write-Host "[deps] scoop install ffmpeg realesrgan-ncnn-vulkan rife-ncnn-vulkan ..."
+scoop install ffmpeg realesrgan-ncnn-vulkan rife-ncnn-vulkan  # rife = interpolation
 
 # The scoop realesrgan package ships without model weights -> cache them locally.
 $cache = Join-Path $env:LOCALAPPDATA "auvide\models"

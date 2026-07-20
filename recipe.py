@@ -35,8 +35,9 @@ class Recipe:
     trim_start: float = 0.0
     trim_dur: float = 0.0              # 0 = to end
     audio: bool = True
-    # --- reserved for the stage engine (declared now, executed next) ---
-    frame_ops: list = field(default_factory=list)   # e.g. [{"op": "interpolate", "factor": 2}]
+    interpolate: int = 0              # RIFE factor (0=off, 2/3/4)
+    slowmo: bool = False              # keep fps (slow-motion) vs smoother
+    # --- reserved for upcoming stages ---
     lut: str = ""                                    # .cube LUT path
     target: str = ""                                 # delivery target preset id
 
@@ -54,7 +55,45 @@ STYLES: dict[str, Recipe] = {
     "Punchy SDR":  Recipe(hdr="off", grade=grade_dict("max")),
     "Sharp Photo": Recipe(model="x4plus", hdr="on", grade=grade_dict("vibrant")),
     "Clean":       Recipe(hdr="off", grade=grade_dict("none")),
+    "Smooth 60":   Recipe(hdr="on", grade=grade_dict("vibrant"), interpolate=2),
 }
+
+
+# --- Delivery targets: one-tap "export for platform" -------------------------
+# Each may force SDR and a fixed output size (crop or pad). {} = keep source.
+TARGETS: dict[str, dict] = {
+    "source":  {},
+    "youtube": {},                                                    # keep as-is (HDR ok)
+    "web":     {"hdr": "off", "max_h": 1080},                         # cap 1080p, keep aspect
+    "reel":    {"hdr": "off", "w": 1080, "h": 1920, "fit": "crop"},   # 9:16 IG/TikTok
+    "tiktok":  {"hdr": "off", "w": 1080, "h": 1920, "fit": "crop"},
+    "post":    {"hdr": "off", "w": 1080, "h": 1080, "fit": "crop"},   # 1:1 IG post
+    "story":   {"hdr": "off", "w": 1080, "h": 1920, "fit": "pad"},    # 9:16 padded
+    "x":       {"hdr": "off", "w": 1920, "h": 1080, "fit": "pad"},    # 16:9
+}
+
+
+def target_hdr(name):
+    """HDR override a target forces, or None."""
+    return (TARGETS.get(name) or {}).get("hdr")
+
+
+def target_transform(name, src_w, src_h):
+    """Return (ffmpeg scale/crop/pad filter or "", (out_w, out_h)) for a target."""
+    t = TARGETS.get(name) or {}
+    if "w" in t and "h" in t:
+        w, h, fit = t["w"], t["h"], t.get("fit", "crop")
+        if fit == "pad":
+            f = (f"scale={w}:{h}:force_original_aspect_ratio=decrease,"
+                 f"pad={w}:{h}:(ow-iw)/2:(oh-ih)/2")
+        else:
+            f = f"scale={w}:{h}:force_original_aspect_ratio=increase,crop={w}:{h}"
+        return f, (w, h)
+    if "max_h" in t and src_h > t["max_h"]:
+        mh = t["max_h"]
+        w = int(round(src_w * mh / src_h / 2)) * 2       # keep width even
+        return f"scale={w}:{mh}:flags=lanczos", (w, mh)
+    return "", (src_w, src_h)
 
 
 def save(recipe: Recipe, path) -> None:
@@ -85,6 +124,13 @@ def apply_to_args(recipe: Recipe, args, given: set) -> None:
         setg("duration", "--duration", recipe.trim_dur)
     if not recipe.audio:
         setg("no_audio", "--no-audio", True)
+    setg("interpolate", "--interpolate", recipe.interpolate)
+    if recipe.slowmo:
+        setg("slowmo", "--slowmo", True)
+    if recipe.lut:
+        setg("lut", "--lut", recipe.lut)
+    if recipe.target:
+        setg("target", "--target", recipe.target)
     # grade knobs (only fill those the user didn't override)
     knob_flag = {"saturation": "--saturation", "vibrance": "--vibrance-amt",
                  "contrast": "--contrast", "gamma": "--gamma", "warmth": "--warmth",

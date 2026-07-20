@@ -1,4 +1,6 @@
 grade
 gui
+recipe
+stages
 tools
 upscale_hdr

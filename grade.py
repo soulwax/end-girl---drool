@@ -48,11 +48,14 @@ def _scurve(strength: float) -> str:
 
 
 def build_chain(g: Grade, out_format: str | None = "yuv420p10le",
-                working: str | None = "gbrpf32le") -> str:
+                working: str | None = "gbrpf32le", lut: str = "") -> str:
     """Return a comma-joined ffmpeg filter chain for the grade.
 
     out_format=None leaves the pixels in `working` space so a caller (e.g. the
     HDR path) can append its own tail. Set out_format='rgb24' for a preview PNG.
+    `lut` is a bare .cube filename applied after the grade — the caller must run
+    ffmpeg with cwd set to the file's directory (avoids the Windows drive-colon
+    breaking the filtergraph parser).
     """
     parts: list[str] = []
     if working:
@@ -72,6 +75,8 @@ def build_chain(g: Grade, out_format: str | None = "yuv420p10le",
         parts.append(f"vibrance=intensity={clamp(g.vibrance, 0.0, 2.0):.3f}")
     if g.sharpen > 0.001:
         parts.append(f"unsharp=5:5:{g.sharpen:.3f}:3:3:{g.sharpen * 0.2:.3f}")
+    if lut:
+        parts.append(f"lut3d={lut}")               # bare filename; caller sets cwd
     if out_format:
         parts.append(f"format={out_format}")
     return ",".join(parts)
