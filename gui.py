@@ -277,6 +277,9 @@ class App:
         self.v_slowmo = tk.BooleanVar(value=False)
         self.v_target = tk.StringVar(value="source")
         self.v_lut = tk.StringVar(value="")
+        self.v_deint = tk.BooleanVar(value=False)
+        self.v_denoise = tk.StringVar(value="off")
+        self.v_stab = tk.BooleanVar(value=False)
         self.v_lut.trace_add("write", lambda *_: self._schedule_render() if self._loaded else None)
         self.v_zoom = tk.BooleanVar(value=False)   # 1:1 pixel-peek in preview
         self.v_status = tk.StringVar(value="Ready — choose a video to begin.")
@@ -454,6 +457,16 @@ class App:
         ttk.Button(num4, text="…", width=3, command=self._browse_lut).pack(side="left", padx=(2, 0))
         ttk.Button(num4, text="✕", width=3, command=lambda: self.v_lut.set("")).pack(side="left")
 
+        num5 = ttk.Frame(opt); num5.grid(row=8, column=0, columnspan=4, sticky="ew", pady=(4, 2))
+        ttk.Label(num5, text="Restore", style="Muted.TLabel").pack(side="left", padx=(6, 8))
+        ttk.Checkbutton(num5, text="Deinterlace", variable=self.v_deint).pack(side="left", padx=4)
+        ttk.Label(num5, text="Denoise", style="Muted.TLabel").pack(side="left", padx=(12, 4))
+        ttk.Combobox(num5, textvariable=self.v_denoise, state="readonly", width=8,
+                     values=["off", "light", "medium", "strong"]).pack(side="left")
+        cbs = ttk.Checkbutton(num5, text="Stabilize", variable=self.v_stab)
+        cbs.pack(side="left", padx=12)
+        Tooltip(cbs, "vidstab 2-pass — smooths shaky handheld footage.")
+
         bar = ttk.Frame(body); bar.grid(row=3, column=0, sticky="ew", pady=(8, 4))
         self.btn_start = ttk.Button(bar, text="▶  Start", style="Accent.TButton", command=self._start)
         self.btn_start.pack(side="left")
@@ -586,6 +599,7 @@ class App:
         self.v_slowmo.set(r.slowmo)
         self.v_target.set(r.target or "source")
         self.v_lut.set(r.lut or "")
+        self.v_deint.set(r.deinterlace); self.v_denoise.set(r.denoise); self.v_stab.set(r.stabilize)
         for k, *_ in GRADE_SLIDERS:
             if k in r.grade:
                 self.g_vars[k].set(r.grade[k])
@@ -963,6 +977,12 @@ class App:
             cmd += ["--target", self.v_target.get()]
         if self.v_lut.get().strip():
             cmd += ["--lut", self.v_lut.get().strip()]
+        if self.v_deint.get():
+            cmd.append("--deinterlace")
+        if self.v_denoise.get() != "off":
+            cmd += ["--denoise", self.v_denoise.get()]
+        if self.v_stab.get():
+            cmd.append("--stabilize")
         if self.v_tile.get() > 0:
             cmd += ["--tile", str(self.v_tile.get())]
         if self.v_resume.get():
@@ -1201,7 +1221,8 @@ class App:
                  audio=self.v_audio, open_done=self.v_open, notify=self.v_notify,
                  sleep=self.v_sleep, batch=self.v_batch, trim_start=self.v_start,
                  trim_dur=self.v_dur, interp=self.v_interp, slowmo=self.v_slowmo,
-                 target=self.v_target, lut=self.v_lut)
+                 target=self.v_target, lut=self.v_lut, deint=self.v_deint,
+                 denoise=self.v_denoise, stab=self.v_stab)
         for k, *_ in GRADE_SLIDERS:
             m[f"g_{k}"] = self.g_vars[k]
         return m

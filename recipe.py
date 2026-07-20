@@ -37,7 +37,9 @@ class Recipe:
     audio: bool = True
     interpolate: int = 0              # RIFE factor (0=off, 2/3/4)
     slowmo: bool = False              # keep fps (slow-motion) vs smoother
-    # --- reserved for upcoming stages ---
+    deinterlace: bool = False         # restore: bwdif
+    denoise: str = "off"              # restore: off/light/medium/strong
+    stabilize: bool = False           # restore: vidstab
     lut: str = ""                                    # .cube LUT path
     target: str = ""                                 # delivery target preset id
 
@@ -56,6 +58,7 @@ STYLES: dict[str, Recipe] = {
     "Sharp Photo": Recipe(model="x4plus", hdr="on", grade=grade_dict("vibrant")),
     "Clean":       Recipe(hdr="off", grade=grade_dict("none")),
     "Smooth 60":   Recipe(hdr="on", grade=grade_dict("vibrant"), interpolate=2),
+    "Restore":     Recipe(hdr="on", grade=grade_dict("vibrant", sharpen=0.70), denoise="medium"),
 }
 
 
@@ -127,6 +130,11 @@ def apply_to_args(recipe: Recipe, args, given: set) -> None:
     setg("interpolate", "--interpolate", recipe.interpolate)
     if recipe.slowmo:
         setg("slowmo", "--slowmo", True)
+    if recipe.deinterlace:
+        setg("deinterlace", "--deinterlace", True)
+    setg("denoise", "--denoise", recipe.denoise)
+    if recipe.stabilize:
+        setg("stabilize", "--stabilize", True)
     if recipe.lut:
         setg("lut", "--lut", recipe.lut)
     if recipe.target:

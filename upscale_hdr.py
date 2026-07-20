@@ -54,6 +54,13 @@ MODEL_MAP = {
     "x4plus-anime": ("realesrgan-x4plus-anime", 4), # illustration / anime, 4x only
 }
 
+# restore: hqdn3d denoise presets (luma_spatial:chroma_spatial:luma_tmp:chroma_tmp)
+DENOISE = {
+    "light":  "hqdn3d=1.5:1.5:6:6",
+    "medium": "hqdn3d=3:2:9:9",
+    "strong": "hqdn3d=6:4:12:12",
+}
+
 # HDR10 mastering-display + content-light metadata (generic P3-ish, 1000-nit master)
 MASTER_DISPLAY = ("G(13250,34500)B(7500,3000)R(34000,16000)"
                   "WP(15635,16450)L(10000000,50)")
@@ -326,6 +333,11 @@ def main() -> None:
                     help="RIFE frame interpolation (0=off, 2=2x smoother/~60fps)")
     ap.add_argument("--slowmo", action="store_true",
                     help="with --interpolate: keep fps (slow-motion) instead of smoother")
+    ap.add_argument("--deinterlace", action="store_true", help="restore: deinterlace (bwdif)")
+    ap.add_argument("--denoise", choices=["off", "light", "medium", "strong"], default="off",
+                    help="restore: denoise before upscaling")
+    ap.add_argument("--stabilize", action="store_true",
+                    help="restore: stabilize shaky footage (vidstab, 2-pass)")
     ap.add_argument("--chunk", type=int, default=300, help="frames encoded per chunk")
     ap.add_argument("--gpu", type=int, default=0, help="Real-ESRGAN GPU id (-1 = CPU)")
     ap.add_argument("--tile", type=int, default=0, help="Real-ESRGAN tile size (0=auto)")
@@ -353,6 +365,7 @@ def main() -> None:
             grade={k: getattr(g, k) for k in recipes.GRADE_KNOBS},
             trim_start=args.start, trim_dur=args.duration or 0.0, audio=not args.no_audio,
             interpolate=args.interpolate, slowmo=args.slowmo,
+            deinterlace=args.deinterlace, denoise=args.denoise, stabilize=args.stabilize,
             lut=str(args.lut) if args.lut else "", target=args.target)
         recipes.save(rc, args.save_recipe)
         print(f"[recipe] saved -> {args.save_recipe}")
@@ -432,6 +445,11 @@ def main() -> None:
     if args.interpolate and args.interpolate > 1:
         print(f"  interpolate {args.interpolate}x RIFE "
               f"({'slow-mo' if args.slowmo else 'smooth'})")
+    rest = [n for n, on in (("deinterlace", args.deinterlace),
+                            (f"denoise:{args.denoise}", args.denoise != "off"),
+                            ("stabilize", args.stabilize)) if on]
+    if rest:
+        print(f"  restore     {', '.join(rest)}")
     if args.lut:
         print(f"  lut         {Path(args.lut).name}")
     if args.target and args.target != "source":
@@ -451,12 +469,35 @@ def main() -> None:
         make_preview(args, src, info)
         return
 
-    # ---- phase 1: extract all frames -------------------------------------
+    # ---- phase 1: extract all frames (with restoration pre-processing) ---
+    # deinterlace/denoise/stabilize run before upscaling so the AI gets clean input
+    pre = []
+    if args.deinterlace:
+        pre.append("bwdif")
+    if args.denoise != "off":
+        pre.append(DENOISE[args.denoise])
+
     marker = frames_in / ".extracted"
+    sig = (f"{args.start}|{args.duration}|{args.deinterlace}|{args.denoise}|"
+           f"{args.stabilize}")
     have = len(list(frames_in.glob("frame_*.png")))
-    if args.resume and marker.exists() and have >= expected - 1:
+    if (args.resume and marker.exists() and marker.read_text() == sig
+            and have >= expected - 1):
         print(f"[1/3] frames: reusing {have} extracted frames")
     else:
+        cwd = None
+        if args.stabilize:
+            print("[1/3] stabilize pass 1 (motion analysis) ...", flush=True)
+            cwd = str(work)                    # bare .trf name; cwd avoids the drive-colon
+            det = [str(FFMPEG), "-y"]
+            if args.start:
+                det += ["-ss", str(args.start)]
+            det += ["-i", str(src)]
+            if args.duration:
+                det += ["-t", str(args.duration)]
+            det += ["-vf", "vidstabdetect=result=transforms.trf", "-f", "null", "-"]
+            run(det, cwd=cwd)
+            pre.append("vidstabtransform=input=transforms.trf:smoothing=20")
         print(f"[1/3] extracting {expected} frames ...", flush=True)
         t0 = time.time()
         ex = [str(FFMPEG), "-y"]
@@ -465,9 +506,11 @@ def main() -> None:
         ex += ["-i", str(src)]
         if args.duration:
             ex += ["-t", str(args.duration)]
+        if pre:
+            ex += ["-vf", ",".join(pre)]
         ex += ["-vsync", "passthrough", str(frames_in / "frame_%06d.png")]
-        run(ex)
-        marker.write_text("ok")
+        run(ex, cwd=cwd)
+        marker.write_text(sig)
         have = len(list(frames_in.glob("frame_*.png")))
         print(f"      extracted {have} frames in {fmt_eta(time.time()-t0)}")
 

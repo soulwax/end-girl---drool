@@ -134,6 +134,9 @@ python upscale_hdr.py --preview --at 25,95 # at chosen seconds -> output/preview
 | `--slowmo` | | with `--interpolate`: slow-motion (keep fps) instead of smoother |
 | `--target NAME` | `source` | delivery preset: crop/pad + SDR for platforms (reel · tiktok · post · story · x · web · youtube) |
 | `--lut FILE` | | apply a 3D LUT (`.cube`) after the grade |
+| `--deinterlace` | | restore: deinterlace (bwdif) |
+| `--denoise {off,light,medium,strong}` | `off` | restore: denoise before upscaling |
+| `--stabilize` | | restore: stabilize shaky footage (vidstab, 2-pass) |
 | `--recipe FILE` / `--save-recipe FILE` | | load / save a full job recipe (`.json`) |
 | `--scale {2,3,4}` | `2` | upscale factor |
 | `--model {animevideo,x4plus,x4plus-anime}` | `animevideo` | `animevideo` = fast, denoises, best for real video; `x4plus` = sharper photographic detail |
@@ -187,9 +190,11 @@ The `x4plus` model is sharper but slower and needs more VRAM.
 - ✅ **Live grade preview** — before/after wipe + sliders, shared with the render.
 - ✅ **AI upscale preview** (1:1 pixel-peek), **saved presets**, **trim**, **batch**,
   **notify/sleep-when-done**, **accent themes**.
-- **Drag-and-drop** onto the GUI window (needs the optional `tkinterdnd2` package).
+- ✅ **RIFE 60fps / slow-mo**, **LUTs**, **delivery targets** (platform export),
+  **restoration** (deinterlace / denoise / stabilize) — all one stage each.
+- **Face restoration** (GFPGAN/CodeFormer) — needs a torch model, not yet packaged.
+- **Pipeline-builder GUI** + scopes / curves editor.
 - **Standalone `.exe`** — package with PyInstaller for double-click use.
-- **QSV HDR validation** — confirm/tune the `--encoder qsv` HDR10 metadata path.
 
 ## Credits
 
