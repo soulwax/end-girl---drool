@@ -347,7 +347,19 @@ def main() -> None:
     ap.add_argument("--resume", action="store_true", help="reuse frames/chunks already done")
     ap.add_argument("--keep", action="store_true", help="keep scratch files after finishing")
     ap.add_argument("--dry-run", action="store_true", help="print the plan and exit")
+    ap.add_argument("--dump-config", action="store_true", dest="dump_config",
+                    help=argparse.SUPPRESS)   # emit styles/targets/knobs as JSON (for GUIs)
     args = ap.parse_args()
+
+    if args.dump_config:
+        import dataclasses
+        print(json.dumps({
+            "styles": {n: dataclasses.asdict(r) for n, r in recipes.STYLES.items()},
+            "targets": list(recipes.TARGETS.keys()),
+            "grade_knobs": list(recipes.GRADE_KNOBS),
+            "models": list(MODEL_MAP.keys()),
+        }))
+        return
 
     # recipe / style overlay (explicit flags always win)
     given = {a.split("=")[0] for a in sys.argv[1:] if a.startswith("--")}
