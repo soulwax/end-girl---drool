@@ -48,7 +48,7 @@ def _scurve(strength: float) -> str:
 
 
 def build_chain(g: Grade, out_format: str | None = "yuv420p10le",
-                working: str | None = "gbrpf32le", lut: str = "") -> str:
+                working: str | None = "gbrpf32le", lut: str = "", curve: str = "") -> str:
     """Return a comma-joined ffmpeg filter chain for the grade.
 
     out_format=None leaves the pixels in `working` space so a caller (e.g. the
@@ -60,7 +60,9 @@ def build_chain(g: Grade, out_format: str | None = "yuv420p10le",
     parts: list[str] = []
     if working:
         parts.append(f"format={working}")
-    if g.contrast > 0.001:
+    if curve:                                    # explicit curve editor overrides the S-curve
+        parts.append(f"curves=master={curve}")
+    elif g.contrast > 0.001:
         parts.append(f"curves=master={_scurve(g.contrast)}")
     if abs(g.warmth) > 0.001 or abs(g.tint) > 0.001:
         w = clamp(g.warmth, -1.0, 1.0)

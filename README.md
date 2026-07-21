@@ -115,8 +115,10 @@ Or double-click **`run-gui.bat`**. Two tabs:
   divider, **hold Space** to flash the untouched original, **double-click** any
   slider to reset it, and **Save…** your look as a named preset (right-click to
   delete). Hit **AI upscale** + **1:1** to pixel-peek the actual Real-ESRGAN
-  detail before committing. The grade you tune is exactly what the render
-  applies (both use `grade.py`).
+  detail before committing, and **Scopes** for a live waveform + vectorscope.
+  The grade you tune is exactly what the render applies (both use `grade.py`).
+- The **Style** chips (top) apply whole looks one-tap; the **Pipeline** line
+  shows the active stage chain; **Save/Load recipe** persists a full job as JSON.
 
 No GUI? Get the same comparison from the CLI without a full run:
 
@@ -192,8 +194,10 @@ The `x4plus` model is sharper but slower and needs more VRAM.
   **notify/sleep-when-done**, **accent themes**.
 - ✅ **RIFE 60fps / slow-mo**, **LUTs**, **delivery targets** (platform export),
   **restoration** (deinterlace / denoise / stabilize) — all one stage each.
+- ✅ **Recipe save/load in the GUI**, live **pipeline summary**, **scopes**
+  (waveform + vectorscope) in the preview.
 - **Face restoration** (GFPGAN/CodeFormer) — needs a torch model, not yet packaged.
-- **Pipeline-builder GUI** + scopes / curves editor.
+- **Curves editor** (the 8 grade sliders + LUTs already cover most of this).
 - **Standalone `.exe`** — package with PyInstaller for double-click use.
 
 ## Credits

@@ -42,6 +42,7 @@ class Recipe:
     stabilize: bool = False           # restore: vidstab
     lut: str = ""                                    # .cube LUT path
     target: str = ""                                 # delivery target preset id
+    curve: str = ""                                  # master curve "x/y x/y …" (overrides contrast)
 
     def to_grade(self) -> grade.Grade:
         return grade.Grade(**{k: self.grade.get(k, getattr(grade.Grade(), k))
@@ -139,6 +140,8 @@ def apply_to_args(recipe: Recipe, args, given: set) -> None:
         setg("lut", "--lut", recipe.lut)
     if recipe.target:
         setg("target", "--target", recipe.target)
+    if recipe.curve:
+        setg("curve", "--curve", recipe.curve)
     # grade knobs (only fill those the user didn't override)
     knob_flag = {"saturation": "--saturation", "vibrance": "--vibrance-amt",
                  "contrast": "--contrast", "gamma": "--gamma", "warmth": "--warmth",

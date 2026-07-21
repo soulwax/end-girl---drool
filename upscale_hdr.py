@@ -154,7 +154,7 @@ def build_vf(args, info) -> str:
     # the HDR tail (below) can pick up without a round-trip through 8-bit.
     filters.append(grade.build_chain(resolve_grade(args), out_format=None,
                                      working="gbrpf32le",
-                                     lut=str(args.lut) if args.lut else ""))
+                                     lut=str(args.lut) if args.lut else "", curve=args.curve))
 
     if args.hdr == "on":
         # graded BT.709 (float RGB) -> HDR10 PQ / BT.2020, 10-bit.
@@ -185,7 +185,7 @@ def make_preview(args, src: Path, info: dict) -> None:
     so you can judge real upscale detail before committing to a full run.
     """
     grade_vf = grade.build_chain(resolve_grade(args), out_format="rgb24", working="gbrpf32le",
-                                 lut=str(args.lut) if args.lut else "")
+                                 lut=str(args.lut) if args.lut else "", curve=args.curve)
     dur = info["duration"]
     if args.at:
         times = [float(x) for x in args.at.split(",") if x.strip()]
@@ -298,6 +298,8 @@ def main() -> None:
     ap.add_argument("--target", choices=list(recipes.TARGETS), default="source",
                     help="delivery target: crop/pad + SDR for social (reel/tiktok/post/x/web)")
     ap.add_argument("--lut", type=Path, help="apply a 3D LUT (.cube) after the grade")
+    ap.add_argument("--curve", default="",
+                    help="custom master curve points 'x/y x/y …' (overrides the contrast S-curve)")
     ap.add_argument("--vibrance", default="vibrant", choices=list(grade.PRESETS),
                     help="grade preset (base for the --grade knobs below)")
     # per-knob grade overrides (default None -> take the preset's value)
@@ -366,7 +368,7 @@ def main() -> None:
             trim_start=args.start, trim_dur=args.duration or 0.0, audio=not args.no_audio,
             interpolate=args.interpolate, slowmo=args.slowmo,
             deinterlace=args.deinterlace, denoise=args.denoise, stabilize=args.stabilize,
-            lut=str(args.lut) if args.lut else "", target=args.target)
+            lut=str(args.lut) if args.lut else "", target=args.target, curve=args.curve)
         recipes.save(rc, args.save_recipe)
         print(f"[recipe] saved -> {args.save_recipe}")
 

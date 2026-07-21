@@ -284,6 +284,8 @@ class App:
         self.v_zoom = tk.BooleanVar(value=False)   # 1:1 pixel-peek in preview
         self.v_status = tk.StringVar(value="Ready — choose a video to begin.")
         self.v_elapsed = tk.StringVar(value="")
+        self.v_pipeline = tk.StringVar(value="")
+        self.v_scopes = tk.BooleanVar(value=False)
         self.v_plan = tk.StringVar(value="No file selected.")
         self.v_ptime = tk.DoubleVar(value=5.0)
         self.v_ptimelabel = tk.StringVar(value="0:00 / 0:00")
@@ -359,6 +361,8 @@ class App:
         for name in recipes.STYLES:
             ttk.Button(stf, text=name, style="Chip.TButton",
                        command=lambda n=name: self._apply_style(n)).pack(side="left", padx=3)
+        ttk.Label(files, textvariable=self.v_pipeline, style="Muted.TLabel").grid(
+            row=3, column=0, columnspan=3, sticky="w", padx=6, pady=(3, 0))
 
         strip = tk.Frame(body, background=FIELD, highlightbackground=LINE, highlightthickness=1)
         strip.grid(row=1, column=0, sticky="ew", pady=(4, 8))
@@ -473,6 +477,8 @@ class App:
         self.btn_cancel = ttk.Button(bar, text="Cancel", command=self._cancel, state="disabled")
         self.btn_cancel.pack(side="left", padx=6)
         ttk.Button(bar, text="Show command", command=self._show_cmd).pack(side="left", padx=6)
+        ttk.Button(bar, text="Save recipe", command=self._save_recipe_file).pack(side="left", padx=3)
+        ttk.Button(bar, text="Load recipe", command=self._load_recipe_file).pack(side="left", padx=3)
         self.btn_open = ttk.Button(bar, text="Open folder", command=self._open_out, state="disabled")
         self.btn_open.pack(side="left", padx=6)
         ttk.Label(bar, textvariable=self.v_elapsed, style="Muted.TLabel").pack(side="right", padx=6)
@@ -522,16 +528,24 @@ class App:
         self.btn_ai = ttk.Button(top, text="AI upscale", command=self._kick_ai)
         self.btn_ai.grid(row=0, column=6)
         Tooltip(self.btn_ai, "Run Real-ESRGAN on this frame to see real upscale detail (~15s here).")
+        chs = ttk.Checkbutton(top, text="Scopes", variable=self.v_scopes,
+                              command=self._toggle_scopes)
+        chs.grid(row=0, column=7, padx=(8, 4))
+        Tooltip(chs, "Show waveform + vectorscope of the graded frame.")
         ttk.Label(body, textvariable=self.v_pstatus, style="Muted.TLabel").grid(
             row=4, column=0, sticky="w", padx=4, pady=(6, 0))
         self.root.bind("<KeyPress-space>", lambda e: self._ab(True))
         self.root.bind("<KeyRelease-space>", lambda e: self._ab(False))
 
-        # preview canvas
+        # preview canvas (+ optional scopes strip below)
         if HAVE_PIL:
-            self.canvas = tk.Canvas(body, width=self.PW, height=self.PH, background="#0e0f14",
+            pc = ttk.Frame(body); pc.grid(row=1, column=0, sticky="n", pady=2)
+            self.canvas = tk.Canvas(pc, width=self.PW, height=self.PH, background="#0e0f14",
                                     highlightthickness=1, highlightbackground=LINE)
-            self.canvas.grid(row=1, column=0, sticky="n", pady=2)
+            self.canvas.pack()
+            self.scope_canvas = tk.Canvas(pc, width=self.PW, height=160, background="#0e0f14",
+                                          highlightthickness=1, highlightbackground=LINE)
+            # packed only when Scopes is on (see _toggle_scopes)
             self.canvas.bind("<Button-1>", self._wipe)
             self.canvas.bind("<B1-Motion>", self._wipe)
             self.canvas.create_text(self.PW // 2, self.PH // 2, fill=MUTED, font=FONT,
@@ -590,8 +604,10 @@ class App:
             self.g_vars[k].set(getattr(g, k))
 
     def _apply_style(self, name):
-        """One-tap Style: set every render + grade control from a named Recipe."""
-        r = recipes.STYLES[name]
+        """One-tap Style: apply a named Recipe's look + processing (not trim/audio)."""
+        self._apply_recipe(recipes.STYLES[name], full=False)
+
+    def _apply_recipe(self, r, full=False):
         self.v_scale.set(str(r.scale)); self.v_model.set(r.model); self.v_hdr.set(r.hdr)
         self.v_enc.set(r.encoder); self.v_crf.set(r.crf); self.v_preset.set(r.preset)
         self.v_hdrgain.set(r.hdr_gain)
@@ -600,10 +616,60 @@ class App:
         self.v_target.set(r.target or "source")
         self.v_lut.set(r.lut or "")
         self.v_deint.set(r.deinterlace); self.v_denoise.set(r.denoise); self.v_stab.set(r.stabilize)
+        if full:                                     # a saved recipe captures the whole job
+            self.v_start.set(r.trim_start); self.v_dur.set(r.trim_dur); self.v_audio.set(r.audio)
         for k, *_ in GRADE_SLIDERS:
             if k in r.grade:
                 self.g_vars[k].set(r.grade[k])
         self._preset_defaults = r.to_grade()
+        self._update_pipeline()
+
+    def _current_recipe(self):
+        g = self._current_grade()
+        n = {"Off": 0, "2x": 2, "3x": 3, "4x": 4}.get(self.v_interp.get(), 0)
+        return recipes.Recipe(
+            scale=int(self.v_scale.get()), model=self.v_model.get(), hdr=self.v_hdr.get(),
+            encoder=self.v_enc.get(), crf=self.v_crf.get(), preset=self.v_preset.get(),
+            hdr_gain=self.v_hdrgain.get(),
+            grade={k: round(getattr(g, k), 4) for k in recipes.GRADE_KNOBS},
+            trim_start=self.v_start.get(), trim_dur=self.v_dur.get(), audio=self.v_audio.get(),
+            interpolate=n, slowmo=self.v_slowmo.get(), deinterlace=self.v_deint.get(),
+            denoise=self.v_denoise.get(), stabilize=self.v_stab.get(),
+            lut=self.v_lut.get().strip(), target=self.v_target.get())
+
+    def _save_recipe_file(self):
+        f = filedialog.asksaveasfilename(title="Save recipe", defaultextension=".json",
+                                         filetypes=[("Recipe", "*.json")])
+        if f:
+            try:
+                recipes.save(self._current_recipe(), f)
+                self._set_status(f"Recipe saved → {Path(f).name}", "ok")
+            except Exception as e:
+                messagebox.showerror("auvide", f"Could not save recipe:\n{e}")
+
+    def _load_recipe_file(self):
+        f = filedialog.askopenfilename(title="Load recipe",
+                                       filetypes=[("Recipe", "*.json"), ("All files", "*.*")])
+        if f:
+            try:
+                self._apply_recipe(recipes.load(f), full=True)
+                self._set_status(f"Recipe loaded ← {Path(f).name}", "ok")
+            except Exception as e:
+                messagebox.showerror("auvide", f"Could not load recipe:\n{e}")
+
+    def _update_pipeline(self):
+        parts, rest = [], []
+        if self.v_deint.get(): rest.append("deint")
+        if self.v_denoise.get() != "off": rest.append(f"denoise:{self.v_denoise.get()}")
+        if self.v_stab.get(): rest.append("stabilize")
+        if rest: parts.append("restore(" + "+".join(rest) + ")")
+        parts.append(f"upscale {self.v_scale.get()}× {self.v_model.get()}")
+        n = {"Off": 0, "2x": 2, "3x": 3, "4x": 4}.get(self.v_interp.get(), 0)
+        if n: parts.append(f"interp {n}×{' slow-mo' if self.v_slowmo.get() else ''}")
+        parts.append("grade " + ("HDR10" if self.v_hdr.get() == "on" else "SDR"))
+        if self.v_lut.get().strip(): parts.append("LUT")
+        if self.v_target.get() != "source": parts.append(f"deliver {self.v_target.get()}")
+        self.v_pipeline.set("Pipeline:   " + "   →   ".join(parts))
 
     def _reset_slider(self, key):
         self.g_vars[key].set(getattr(self._preset_defaults, key))
@@ -831,13 +897,24 @@ class App:
             self.root.after_cancel(self._render_after)
         self._render_after = self.root.after(160, self._kick_render)
 
+    def _toggle_scopes(self):
+        if not HAVE_PIL:
+            return
+        if self.v_scopes.get():
+            self.scope_canvas.pack(pady=(4, 0))
+            if self._loaded:
+                self._schedule_render()
+        else:
+            self.scope_canvas.pack_forget()
+
     def _kick_render(self):
         self._render_after = None
         self._pgen += 1
         gen = self._pgen
         g = self._current_grade()
         lut = self.v_lut.get().strip()
-        threading.Thread(target=self._grade_worker, args=(gen, g, lut), daemon=True).start()
+        threading.Thread(target=self._grade_worker, args=(gen, g, lut, self.v_scopes.get()),
+                         daemon=True).start()
 
     def _kick_ai(self):
         if not HAVE_PIL or self._orig is None:
@@ -872,7 +949,7 @@ class App:
         except Exception as e:
             self.q.put(("perror", f"AI upscale error: {e}"))
 
-    def _grade_worker(self, gen, g, lut=""):
+    def _grade_worker(self, gen, g, lut="", scopes=False):
         src = self._grade_src or str(PREVIEW_DIR / "src.png")
         out = PREVIEW_DIR / f"g{gen % 3}.png"
         lname, lcwd = "", None
@@ -894,6 +971,18 @@ class App:
                 return
             img = Image.open(out).convert("RGB"); img.load()
             self.q.put(("graded", gen, img))
+            if scopes:                                 # waveform + vectorscope of the grade
+                sc = PREVIEW_DIR / f"sc{gen % 3}.png"
+                svf = ("format=yuv422p,split=2[a][b];"
+                       "[a]waveform=graticule=green:flags=numbers,scale=720:160[w];"
+                       "[b]vectorscope=mode=color3:graticule=green,scale=160:160[v];"
+                       "[w][v]hstack")
+                r2 = subprocess.run([str(FFMPEG), "-y", "-i", str(out), "-vf", svf, str(sc)],
+                                    creationflags=NOWINDOW, capture_output=True, text=True,
+                                    timeout=60)
+                if r2.returncode == 0 and sc.exists():
+                    sci = Image.open(sc).convert("RGB"); sci.load()
+                    self.q.put(("scopes", gen, sci))
         except Exception as e:
             self.q.put(("perror", f"grade render error: {e}"))
 
@@ -1138,6 +1227,14 @@ class App:
                         if msg[1] == self._pgen:
                             self._graded = msg[2]
                             self._composite()
+                    elif kind == "scopes":
+                        if msg[1] == self._pgen and hasattr(self, "scope_canvas"):
+                            im = msg[2]
+                            if im.size != (self.PW, 160):
+                                im = im.resize((self.PW, 160))
+                            self._sctk = ImageTk.PhotoImage(im)
+                            self.scope_canvas.delete("all")
+                            self.scope_canvas.create_image(0, 0, anchor="nw", image=self._sctk)
                     elif kind == "perror":
                         if hasattr(self, "btn_ai"):
                             self.btn_ai.configure(state="normal")
@@ -1161,6 +1258,7 @@ class App:
                     self._set_status("Concatenating + muxing audio…")
         except queue.Empty:
             pass
+        self._update_pipeline()
         self.root.after(120, self._poll)
 
     def _on_exit(self, code):
